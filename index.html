@@ -11,6 +11,9 @@
   <title>계약서 기록 관리</title>
   <link rel="manifest" href="./manifest.json"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&display=swap');
 
@@ -65,6 +68,23 @@
     .header-sub { font-size: 12px; color: var(--muted); margin-top: 3px; font-weight: 300; }
 
     .main { padding: 20px; max-width: 640px; margin: 0 auto; }
+
+    /* ── Auth bar ── */
+    .auth-bar {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+      padding: 12px 14px; background: var(--bg2); border: 1px solid var(--border2);
+      border-radius: 12px; font-size: 12px;
+    }
+    .auth-bar .ab-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); flex-shrink: 0; }
+    .auth-bar .ab-info { flex: 1; color: var(--muted); line-height: 1.4; min-width: 0; }
+    .auth-bar .ab-info strong { color: var(--text2); font-weight: 700; }
+    .auth-bar .ab-info .em { color: var(--green); font-family: var(--mono); font-size: 11px; word-break: break-all; }
+    .auth-btn {
+      padding: 9px 14px; border-radius: 10px; border: none; font-family: var(--sans);
+      font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; -webkit-appearance: none;
+    }
+    .auth-btn.signin { background: linear-gradient(135deg, var(--blue), #4a7ac0); color: #fff; }
+    .auth-btn.signout { background: transparent; border: 1px solid var(--border2); color: var(--muted); }
 
     /* ── Stat grid ── */
     .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 22px; }
@@ -144,7 +164,6 @@
     }
     .contract-card:active { border-color: var(--accent2); }
 
-    /* select mode */
     .select-mode .contract-card { padding-left: 48px; cursor: pointer; }
     .cc-check {
       display: none; position: absolute; left: 16px; top: 18px;
@@ -168,7 +187,6 @@
     .st-hold     { color: var(--yellow); background: #14120a; border: 1px solid #2a2410; }
     .st-canceled { color: var(--red);    background: #1a0a0e; border: 1px solid #3a1a1e; }
 
-    /* amount breakdown */
     .cc-amounts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
     .amt-pill { background: var(--bg3); border-radius: 9px; padding: 8px 11px; }
     .amt-k { font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing: 0.05em; display: block; margin-bottom: 2px; }
@@ -196,6 +214,7 @@
       background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px;
       padding: 6px 10px; font-size: 11px; color: var(--text2); cursor: pointer; max-width: 100%;
     }
+    .file-chip.missing { opacity: 0.55; }
     .file-chip .fn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
 
     .cc-notes {
@@ -214,13 +233,11 @@
     .cc-btn.del { color: #a05060; border-color: #2a1a20; }
     .cc-btn.del:active { background: #1a0a0e; }
 
-    /* ── Empty ── */
     .empty { text-align: center; padding: 60px 20px; color: var(--muted2); }
     .empty-icon { font-size: 54px; margin-bottom: 14px; opacity: 0.5; }
     .empty-title { font-size: 15px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
     .empty-sub { font-size: 12px; color: var(--muted2); line-height: 1.6; }
 
-    /* ── FAB ── */
     .fab {
       position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); right: 20px; z-index: 50;
       width: 58px; height: 58px; border-radius: 50%; border: none;
@@ -233,7 +250,6 @@
     .fab:active { transform: scale(0.92); }
     .fab.hidden { display: none; }
 
-    /* ── Select action bar ── */
     .select-bar {
       display: none; position: fixed; z-index: 60;
       bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); left: 16px; right: 16px;
@@ -252,7 +268,6 @@
     .sb-btn.go { background: var(--kakao); color: #191600; }
     .sb-btn:disabled { opacity: 0.4; }
 
-    /* ── Modal ── */
     .modal-overlay {
       position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
       display: none; align-items: flex-end; justify-content: center;
@@ -287,7 +302,6 @@
     .field-row .field { flex: 1; }
     .amount-hint { font-family: var(--mono); font-size: 11px; color: var(--accent); margin-top: 6px; min-height: 14px; }
 
-    /* attachment */
     .attach-zone {
       position: relative; border: 1.5px dashed var(--border2); border-radius: 11px;
       padding: 16px; text-align: center; background: var(--bg3); cursor: pointer;
@@ -303,6 +317,7 @@
     .attach-item .ai-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text2); }
     .attach-item .ai-size { font-family: var(--mono); font-size: 10px; color: var(--muted2); }
     .attach-item .ai-del { background: none; border: none; color: var(--red); font-size: 16px; cursor: pointer; padding: 0 2px; line-height: 1; }
+    .attach-item.missing .ai-name { color: var(--muted2); }
 
     .modal-actions { display: flex; gap: 10px; margin-top: 24px; }
     .modal-btn {
@@ -319,7 +334,6 @@
       border-radius: 10px; font-size: 12px; color: var(--red); display: none;
     }
 
-    /* snapshot */
     .snap-item {
       display: flex; align-items: center; gap: 12px; padding: 14px;
       background: var(--bg3); border: 1px solid var(--border2); border-radius: 12px;
@@ -334,7 +348,6 @@
       border-radius: 10px; font-size: 12px; color: var(--blue); line-height: 1.6; margin-bottom: 16px;
     }
 
-    /* ── Install banner ── */
     #install-banner {
       display: none; position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
       left: 12px; right: 90px; z-index: 100;
@@ -368,10 +381,11 @@
   <div class="header">
     <div class="header-badge">계약 기록 관리 · PWA</div>
     <div class="header-title">📑 계약서 기록 관리</div>
-    <div class="header-sub">계약금·월세·관리비 · 계약서 첨부 · 카톡 공유 · 월별 자동 보관</div>
+    <div class="header-sub">계약금·월세·관리비 · 계약서 첨부 · 카톡 공유 · 기기 연동 · 월별 보관</div>
   </div>
 
   <div class="main">
+    <div class="auth-bar" id="authBar"></div>
     <div class="stat-grid" id="statGrid"></div>
 
     <div class="toolbar">
@@ -398,14 +412,12 @@
 
 <button class="fab" id="addFab" aria-label="계약 추가">+</button>
 
-<!-- 선택 공유 액션바 -->
 <div class="select-bar" id="selectBar">
   <div class="sb-count"><span id="selCount">0</span>건 선택됨</div>
   <button class="sb-btn cancel" id="selCancel">취소</button>
   <button class="sb-btn go" id="selShare" disabled>공유하기</button>
 </div>
 
-<!-- 설치 배너 -->
 <div id="install-banner">
   <div class="banner-text">
     <strong>앱으로 설치하기</strong>
@@ -484,7 +496,7 @@
     </div>
 
     <div class="field">
-      <label class="field-label">계약서 첨부 <span style="color:var(--muted2);font-weight:400">(사진·PDF, 파일당 2MB 이하)</span></label>
+      <label class="field-label">계약서 첨부 <span style="color:var(--muted2);font-weight:400">(사진·PDF, 파일당 2MB 이하 · 이 기기에 보관)</span></label>
       <div class="attach-zone">
         <input type="file" id="fFiles" accept="image/*,application/pdf" multiple/>
         <div class="az-icon">📎</div>
@@ -518,17 +530,37 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// ══════════════════════════════════════════════════════════
+//  Firebase 설정
+// ══════════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyDmSUuRAfS95PCDg7ZzjKzDGrWDgj7Caa4",
+  authDomain: "contract-manager-5b342.firebaseapp.com",
+  projectId: "contract-manager-5b342",
+  storageBucket: "contract-manager-5b342.firebasestorage.app",
+  messagingSenderId: "380519037108",
+  appId: "1:380519037108:web:951f955dcd2a62d2453fe1"
+};
+
 // ── 상태 ───────────────────────────────────────────────────
 const STORE_KEY = 'contracts_v1';
 const SNAP_KEY  = 'contracts_snapshots_v1';
+const FILES_KEY = 'contract_files_v1';   // { fileId: dataURL }  (기기 로컬 전용)
+
 let contracts = [];
-let snapshots = {};      // { "2026-07": {savedAt, contracts:[...]} }
+let snapshots = {};
+let filesStore = {};
 let filter = 'all';
 let search = '';
 let editingId = null;
-let draftFiles = [];     // 편집 중 첨부파일 [{name,type,size,data}]
+let draftFiles = [];     // 편집 중 [{id,name,type,size,data,missing}]
 let selectMode = false;
 let selected = new Set();
+
+// Firebase
+let fbAuth = null, fbDb = null, fbUser = null;
+let unsubC = null, unsubS = null;
+let snapChecked = false;
 
 const STATUS = {
   active:   { label: '진행중', cls: 'st-active' },
@@ -538,6 +570,7 @@ const STATUS = {
 };
 
 // ── DOM ────────────────────────────────────────────────────
+const authBar      = document.getElementById('authBar');
 const statGrid     = document.getElementById('statGrid');
 const filterRow    = document.getElementById('filterRow');
 const contractList = document.getElementById('contractList');
@@ -572,29 +605,6 @@ const F = {
   notes:   document.getElementById('fNotes'),
 };
 
-// ── 저장/로드 ───────────────────────────────────────────────
-function load() {
-  try { contracts = JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch { contracts = []; }
-  try { snapshots = JSON.parse(localStorage.getItem(SNAP_KEY)) || {}; } catch { snapshots = {}; }
-  // 하위호환: 예전 amount → deposit 으로
-  contracts.forEach(c => {
-    if (c.deposit === undefined && c.amount !== undefined) c.deposit = c.amount;
-    if (c.rent === undefined) c.rent = 0;
-    if (c.maintenance === undefined) c.maintenance = 0;
-    if (!Array.isArray(c.attachments)) c.attachments = [];
-  });
-}
-function save() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(contracts)); return true; }
-  catch (e) {
-    alert('저장 공간이 부족합니다. 첨부 파일 크기를 줄이거나 오래된 계약을 정리해주세요.');
-    return false;
-  }
-}
-function saveSnapshots() {
-  try { localStorage.setItem(SNAP_KEY, JSON.stringify(snapshots)); } catch (e) {}
-}
-
 // ── 유틸 ───────────────────────────────────────────────────
 function fmt(n) { return (Number(n) || 0).toLocaleString('ko-KR'); }
 function won(n) { return '₩ ' + fmt(n); }
@@ -602,6 +612,7 @@ function uid() { return Date.now().toString(36) + Math.random().toString(36).sli
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function monthKey(d) { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
 function fileSize(b) { return b < 1024 ? b+'B' : b < 1048576 ? (b/1024).toFixed(0)+'KB' : (b/1048576).toFixed(1)+'MB'; }
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
 function daysUntil(dateStr) {
   if (!dateStr) return null;
@@ -625,21 +636,181 @@ function showToast(msg) {
   clearTimeout(showToast._t);
   showToast._t = setTimeout(() => toast.classList.remove('show'), 2100);
 }
+function nowISO() { return new Date().toISOString(); }
 
-// ── 월별 자동 보관(스냅샷) ──────────────────────────────────
+// ── 첨부파일 로컬 스토어 ────────────────────────────────────
+function loadFiles() { try { filesStore = JSON.parse(localStorage.getItem(FILES_KEY)) || {}; } catch { filesStore = {}; } }
+function saveFiles() { try { localStorage.setItem(FILES_KEY, JSON.stringify(filesStore)); } catch (e) {} }
+
+// 계약 객체 정규화: 금액 기본값 + 첨부 metadata에 id 부여 (구버전 data → filesStore 이동)
+function normalize(c) {
+  if (c.deposit === undefined && c.amount !== undefined) c.deposit = c.amount;
+  c.deposit = Number(c.deposit) || 0;
+  c.rent = Number(c.rent) || 0;
+  c.maintenance = Number(c.maintenance) || 0;
+  if (!Array.isArray(c.attachments)) c.attachments = [];
+  let moved = false;
+  c.attachments = c.attachments.map(f => {
+    if (f && f.data) { const id = f.id || uid(); filesStore[id] = f.data; moved = true; return { id, name: f.name, type: f.type, size: f.size }; }
+    return { id: f.id || uid(), name: f.name, type: f.type, size: f.size };
+  });
+  if (moved) saveFiles();
+  return c;
+}
+
+// ── 로컬 저장/로드 (게스트 모드) ────────────────────────────
+function loadLocal() {
+  try { contracts = JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch { contracts = []; }
+  try { snapshots = JSON.parse(localStorage.getItem(SNAP_KEY)) || {}; } catch { snapshots = {}; }
+  contracts.forEach(normalize);
+}
+function saveLocal() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(contracts)); return true; }
+  catch (e) { alert('저장 공간이 부족합니다. 첨부 파일 크기를 줄이거나 오래된 계약을 정리해주세요.'); return false; }
+}
+function saveLocalSnaps() { try { localStorage.setItem(SNAP_KEY, JSON.stringify(snapshots)); } catch (e) {} }
+
+// ══════════════════════════════════════════════════════════
+//  데이터 지속화 (로그인 시 Firestore, 아니면 로컬)
+// ══════════════════════════════════════════════════════════
+function userCol() { return fbDb.collection('users').doc(fbUser.uid).collection('contracts'); }
+function userSnapCol() { return fbDb.collection('users').doc(fbUser.uid).collection('snapshots'); }
+
+function persistContract(c) {
+  if (fbUser) {
+    userCol().doc(c.id).set(c).catch(e => showToast('동기화 오류: ' + e.code));
+  } else {
+    const idx = contracts.findIndex(x => x.id === c.id);
+    if (idx > -1) contracts[idx] = c; else contracts.push(c);
+    saveLocal(); renderAll();
+  }
+}
+function removeContract(id) {
+  if (fbUser) {
+    userCol().doc(id).delete().catch(e => showToast('삭제 오류: ' + e.code));
+  } else {
+    contracts = contracts.filter(x => x.id !== id);
+    saveLocal(); renderAll();
+  }
+}
+function persistSnapshot(key, snap) {
+  if (fbUser) { userSnapCol().doc(key).set(snap).catch(() => {}); }
+  else { snapshots[key] = snap; saveLocalSnaps(); }
+}
+
+// ── 월별 자동 보관 ──────────────────────────────────────────
 function maybeSnapshot() {
   if (!contracts.length) return;
   const key = monthKey();
-  if (snapshots[key]) return;         // 이번 달 이미 보관됨
-  snapshots[key] = { savedAt: new Date().toISOString(), contracts: JSON.parse(JSON.stringify(contracts)) };
-  saveSnapshots();
+  if (snapshots[key]) return;
+  persistSnapshot(key, { savedAt: nowISO(), contracts: clone(contracts) });
+  if (!fbUser) renderAll();
 }
 function snapshotNow() {
-  const key = monthKey();
-  snapshots[key] = { savedAt: new Date().toISOString(), contracts: JSON.parse(JSON.stringify(contracts)) };
-  saveSnapshots();
+  persistSnapshot(monthKey(), { savedAt: nowISO(), contracts: clone(contracts) });
   showToast('현재 계약 내용을 보관했어요');
 }
+
+// ══════════════════════════════════════════════════════════
+//  Firebase 인증 & 실시간 동기화
+// ══════════════════════════════════════════════════════════
+function initFirebase() {
+  if (typeof firebase === 'undefined') { renderAuth(); return; } // SDK 로드 실패(오프라인 최초) → 게스트
+  try {
+    firebase.initializeApp(firebaseConfig);
+    fbAuth = firebase.auth();
+    fbDb = firebase.firestore();
+    fbDb.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+    fbAuth.getRedirectResult().catch(() => {});
+    fbAuth.onAuthStateChanged(onAuthChange);
+  } catch (e) { renderAuth(); }
+}
+
+function onAuthChange(user) {
+  fbUser = user || null;
+  detachListeners();
+  renderAuth();
+  if (fbUser) {
+    migrateThenListen();
+  } else {
+    loadLocal();
+    snapChecked = false;
+    renderAll();
+    setTimeout(maybeSnapshot, 800);
+  }
+}
+
+async function migrateThenListen() {
+  // 클라우드가 비어있고 이 기기에 로컬 계약이 있으면 업로드 제안
+  try {
+    const first = await userCol().limit(1).get();
+    if (first.empty) {
+      let local = [];
+      try { local = JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch {}
+      if (local.length && confirm(`이 기기에 저장된 계약 ${local.length}건을 클라우드 계정으로 올릴까요?\n(이후 다른 기기에서도 함께 보입니다)`)) {
+        const batch = fbDb.batch();
+        local.forEach(c => { normalize(c); if (!c.id) c.id = uid(); batch.set(userCol().doc(c.id), c); });
+        let ls = {}; try { ls = JSON.parse(localStorage.getItem(SNAP_KEY)) || {}; } catch {}
+        Object.keys(ls).forEach(k => batch.set(userSnapCol().doc(k), ls[k]));
+        await batch.commit();
+        showToast('기존 계약을 클라우드로 옮겼어요');
+      }
+    }
+  } catch (e) {}
+  attachListeners();
+}
+
+function attachListeners() {
+  snapChecked = false;
+  unsubC = userCol().onSnapshot(snap => {
+    contracts = snap.docs.map(d => normalize(d.data()));
+    renderAll();
+    if (!snapChecked) { snapChecked = true; setTimeout(maybeSnapshot, 500); }
+  }, err => showToast('동기화 오류: ' + err.code));
+
+  unsubS = userSnapCol().onSnapshot(snap => {
+    snapshots = {};
+    snap.docs.forEach(d => { snapshots[d.id] = d.data(); });
+  }, () => {});
+}
+function detachListeners() {
+  if (unsubC) { unsubC(); unsubC = null; }
+  if (unsubS) { unsubS(); unsubS = null; }
+}
+
+function signIn() {
+  if (!fbAuth) { showToast('인터넷 연결 후 다시 시도해주세요'); return; }
+  const provider = new firebase.auth.GoogleAuthProvider();
+  fbAuth.signInWithPopup(provider).catch(err => {
+    if (err && (err.code === 'auth/popup-blocked' || err.code === 'auth/operation-not-supported-in-this-environment' || err.code === 'auth/cancelled-popup-request')) {
+      fbAuth.signInWithRedirect(provider);
+    } else if (err && err.code !== 'auth/popup-closed-by-user') {
+      showToast('로그인 오류: ' + err.code);
+    }
+  });
+}
+function doSignOut() {
+  if (!fbAuth) return;
+  if (!confirm('로그아웃할까요? (클라우드 데이터는 그대로 유지됩니다)')) return;
+  fbAuth.signOut();
+}
+
+function renderAuth() {
+  if (fbUser) {
+    authBar.innerHTML = `
+      <span class="ab-dot"></span>
+      <div class="ab-info"><strong>실시간 동기화 중</strong><br/><span class="em">${esc(fbUser.email || fbUser.displayName || '로그인됨')}</span></div>
+      <button class="auth-btn signout" id="signOutBtn">로그아웃</button>`;
+  } else {
+    authBar.innerHTML = `
+      <div class="ab-info"><strong>이 기기에만 저장 중</strong><br/>로그인하면 PC·폰이 실시간 연동됩니다</div>
+      <button class="auth-btn signin" id="signInBtn">☁️ 로그인</button>`;
+  }
+}
+authBar.addEventListener('click', e => {
+  if (e.target.closest('#signInBtn')) signIn();
+  if (e.target.closest('#signOutBtn')) doSignOut();
+});
 
 // ── 통계 렌더 ───────────────────────────────────────────────
 function renderStats() {
@@ -660,7 +831,6 @@ function renderStats() {
     <div class="stat-card"><div class="stat-label">만료 임박 (30일)</div><div class="stat-value ${expiring?'hl-yellow':''}">${expiring}<span>건</span></div></div>`;
 }
 
-// ── 필터 렌더 ───────────────────────────────────────────────
 function renderFilters() {
   const counts = {
     all: contracts.length,
@@ -674,7 +844,6 @@ function renderFilters() {
     <button class="filter-chip ${filter===k?'active':''}" data-filter="${k}">${l}<span class="cnt">${counts[k]}</span></button>`).join('');
 }
 
-// ── 카드 HTML ───────────────────────────────────────────────
 function amountsHtml(c) {
   const parts = [];
   if (Number(c.deposit))     parts.push(`<div class="amt-pill deposit"><span class="amt-k">계약금·보증금</span><span class="amt-v">${fmt(c.deposit)}<span class="u">원</span></span></div>`);
@@ -690,8 +859,10 @@ function cardHtml(c, readonly) {
   if (c.signDate) meta.push(`<span><span class="k">체결</span> ${c.signDate.replace(/-/g,'.')}</span>`);
   if (c.endDate)  meta.push(`<span><span class="k">만료</span> ${c.endDate.replace(/-/g,'.')}</span>`);
   if (c.manager)  meta.push(`<span><span class="k">담당</span> ${esc(c.manager)}</span>`);
-  const files = (c.attachments||[]).map((f,i) =>
-    `<span class="file-chip" data-file="${c.id}:${i}">📄 <span class="fn">${esc(f.name)}</span></span>`).join('');
+  const files = (c.attachments||[]).map(f => {
+    const has = !!filesStore[f.id];
+    return `<span class="file-chip ${has?'':'missing'}" data-file="${f.id}" title="${has?'':'다른 기기에 저장된 파일'}">${has?'📄':'☁️'} <span class="fn">${esc(f.name)}</span></span>`;
+  }).join('');
   const picked = selected.has(c.id) ? 'picked' : '';
   return `
     <div class="contract-card ${picked}" data-id="${c.id}">
@@ -718,7 +889,6 @@ function cardHtml(c, readonly) {
     </div>`;
 }
 
-// ── 목록 렌더 ───────────────────────────────────────────────
 function sortContracts(list) {
   return list.sort((a,b) => {
     const rank = s => s==='active'?0 : s==='hold'?1 : s==='done'?2 : 3;
@@ -758,9 +928,9 @@ function renderAll() { renderStats(); renderFilters(); renderList(); }
 // ── 모달(추가/수정) ─────────────────────────────────────────
 function renderAttachList() {
   attachList.innerHTML = draftFiles.map((f,i) => `
-    <div class="attach-item">
-      <span>${f.type && f.type.includes('pdf') ? '📕' : '🖼'}</span>
-      <span class="ai-name">${esc(f.name)}</span>
+    <div class="attach-item ${f.missing ? 'missing' : ''}">
+      <span>${f.missing ? '☁️' : (f.type && f.type.includes('pdf') ? '📕' : '🖼')}</span>
+      <span class="ai-name">${esc(f.name)}${f.missing ? ' · 다른 기기' : ''}</span>
       <span class="ai-size">${fileSize(f.size)}</span>
       <button class="ai-del" data-idx="${i}">×</button>
     </div>`).join('');
@@ -775,7 +945,7 @@ function openModal(id) {
     F.type.value=c.type||'기타'; F.status.value=c.status||'active';
     F.deposit.value=c.deposit||''; F.rent.value=c.rent||''; F.maint.value=c.maintenance||'';
     F.signDate.value=c.signDate||''; F.endDate.value=c.endDate||''; F.notes.value=c.notes||'';
-    draftFiles = (c.attachments||[]).map(f => ({...f}));
+    draftFiles = (c.attachments||[]).map(f => ({ id:f.id, name:f.name, type:f.type, size:f.size, data: filesStore[f.id]||null, missing: !filesStore[f.id] }));
   } else {
     modalTitle.textContent = '계약 추가';
     F.title.value=''; F.party.value=''; F.manager.value='';
@@ -796,28 +966,37 @@ function numOf(el) { return Number(String(el.value).replace(/[^0-9]/g,'')) || 0;
 function saveContract() {
   const title = F.title.value.trim();
   if (!title) { formError.textContent='⚠️ 계약명을 입력해주세요.'; formError.style.display='block'; return; }
-  const data = {
+
+  // 기존 계약의 첨부와 비교해 삭제된 파일은 로컬 스토어에서 정리
+  const prev = editingId ? contracts.find(c => c.id === editingId) : null;
+  const keepIds = new Set(draftFiles.map(f => f.id));
+  if (prev) (prev.attachments||[]).forEach(f => { if (!keepIds.has(f.id)) delete filesStore[f.id]; });
+
+  // 새 첨부 바이너리 저장 + 메타데이터만 계약에 보관
+  draftFiles.forEach(f => { if (f.data) filesStore[f.id] = f.data; });
+  saveFiles();
+  const attachments = draftFiles.map(f => ({ id: f.id, name: f.name, type: f.type, size: f.size }));
+
+  const base = prev || { id: uid(), createdAt: Date.now() };
+  const c = {
+    id: base.id, createdAt: base.createdAt || Date.now(),
     title, party: F.party.value.trim(), manager: F.manager.value.trim(),
     type: F.type.value, status: F.status.value,
     deposit: numOf(F.deposit), rent: numOf(F.rent), maintenance: numOf(F.maint),
     signDate: F.signDate.value, endDate: F.endDate.value, notes: F.notes.value.trim(),
-    attachments: draftFiles,
+    attachments,
   };
-  if (editingId) {
-    const idx = contracts.findIndex(c => c.id === editingId);
-    if (idx > -1) contracts[idx] = { ...contracts[idx], ...data };
-  } else {
-    contracts.push({ id: uid(), createdAt: Date.now(), ...data });
-  }
-  if (!save()) return;
+  persistContract(c);
   showToast(editingId ? '수정되었습니다' : '계약이 추가되었습니다');
-  closeModal(); renderAll();
+  closeModal();
 }
 function deleteContract(id) {
   const c = contracts.find(x => x.id === id); if (!c) return;
   if (!confirm(`"${c.title}" 계약을 삭제할까요?`)) return;
-  contracts = contracts.filter(x => x.id !== id);
-  save(); renderAll(); showToast('삭제되었습니다');
+  (c.attachments||[]).forEach(f => delete filesStore[f.id]);
+  saveFiles();
+  removeContract(id);
+  showToast('삭제되었습니다');
 }
 function updateDepositHint() {
   const n = numOf(F.deposit);
@@ -827,13 +1006,13 @@ function updateDepositHint() {
   depositHint.textContent = '= ' + (s.trim() || fmt(n)) + '원';
 }
 
-// ── 첨부파일 처리 ───────────────────────────────────────────
+// ── 첨부파일 입력 ───────────────────────────────────────────
 document.getElementById('fFiles').addEventListener('change', async e => {
   const files = Array.from(e.target.files);
   for (const file of files) {
     if (file.size > 2*1048576) { showToast(`"${file.name}" 은 2MB를 초과해요`); continue; }
     const data = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); });
-    draftFiles.push({ name: file.name, type: file.type, size: file.size, data });
+    draftFiles.push({ id: uid(), name: file.name, type: file.type, size: file.size, data, missing: false });
   }
   renderAttachList();
   e.target.value = '';
@@ -842,11 +1021,12 @@ attachList.addEventListener('click', e => {
   const b = e.target.closest('.ai-del'); if (!b) return;
   draftFiles.splice(Number(b.dataset.idx), 1); renderAttachList();
 });
-function openFile(cid, idx) {
-  const c = contracts.find(x=>x.id===cid); if (!c) return;
-  const f = (c.attachments||[])[idx]; if (!f) return;
+function openFile(fileId) {
+  const data = filesStore[fileId];
+  if (!data) { showToast('다른 기기에 저장된 파일이라 이 기기에서는 열 수 없어요'); return; }
+  const isPdf = /^data:application\/pdf/.test(data);
   const w = window.open();
-  if (w) w.document.write(`<title>${esc(f.name)}</title><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh">${f.type&&f.type.includes('pdf') ? `<iframe src="${f.data}" style="width:100vw;height:100vh;border:0"></iframe>` : `<img src="${f.data}" style="max-width:100%;max-height:100vh"/>`}</body>`);
+  if (w) w.document.write(`<body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh">${isPdf ? `<iframe src="${data}" style="width:100vw;height:100vh;border:0"></iframe>` : `<img src="${data}" style="max-width:100%;max-height:100vh"/>`}</body>`);
 }
 
 // ── 엑셀 내보내기 ─────────────────────────────────────────
@@ -875,13 +1055,11 @@ function exportExcel() {
 
 // ── 선택 공유 (카톡 등) ─────────────────────────────────────
 function toggleSelectMode(on) {
-  selectMode = on;
-  selected.clear();
+  selectMode = on; selected.clear();
   selectBar.classList.toggle('show', on);
   addFab.classList.toggle('hidden', on);
   shareModeBtn.textContent = on ? '✖ 선택 종료' : '📤 선택 공유';
-  updateSelCount();
-  renderList();
+  updateSelCount(); renderList();
 }
 function updateSelCount() {
   selCount.textContent = selected.size;
@@ -917,12 +1095,8 @@ async function shareSelected() {
     try { await navigator.share({ title: '계약 내역', text }); return; }
     catch (e) { if (e && e.name === 'AbortError') return; }
   }
-  try {
-    await navigator.clipboard.writeText(text);
-    showToast('공유 텍스트를 복사했어요. 카톡에 붙여넣기 하세요');
-  } catch {
-    prompt('아래 내용을 복사해 카톡에 붙여넣으세요', text);
-  }
+  try { await navigator.clipboard.writeText(text); showToast('공유 텍스트를 복사했어요. 카톡에 붙여넣기 하세요'); }
+  catch { prompt('아래 내용을 복사해 카톡에 붙여넣으세요', text); }
 }
 
 // ── 보관 기록 모달 ──────────────────────────────────────────
@@ -938,11 +1112,11 @@ function openSnapList() {
     html += keys.map(k => {
       const s = snapshots[k];
       const d = new Date(s.savedAt);
-      const dep = s.contracts.reduce((a,c)=>a+(Number(c.deposit)||0),0);
+      const dep = (s.contracts||[]).reduce((a,c)=>a+(Number(c.deposit)||0),0);
       return `<div class="snap-item" data-snap="${k}">
         <div>
           <div class="snap-date">${k}</div>
-          <div class="snap-meta">보관일 ${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} · 계약 ${s.contracts.length}건 · 보증금 ${fmt(dep)}원</div>
+          <div class="snap-meta">보관일 ${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} · 계약 ${(s.contracts||[]).length}건 · 보증금 ${fmt(dep)}원</div>
         </div>
         <div class="snap-arrow">›</div>
       </div>`;
@@ -955,11 +1129,11 @@ function openSnapList() {
 }
 function openSnapDetail(key) {
   const s = snapshots[key]; if (!s) return;
-  const list = sortContracts(s.contracts.slice());
-  const dep = s.contracts.reduce((a,c)=>a+(Number(c.deposit)||0),0);
-  const rent = s.contracts.reduce((a,c)=>a+(Number(c.rent)||0)+(Number(c.maintenance)||0),0);
+  const list = sortContracts((s.contracts||[]).slice());
+  const dep = (s.contracts||[]).reduce((a,c)=>a+(Number(c.deposit)||0),0);
+  const rent = (s.contracts||[]).reduce((a,c)=>a+(Number(c.rent)||0)+(Number(c.maintenance)||0),0);
   snapView.innerHTML = `<div class="modal-title">🗂 ${key} 보관본</div>
-    <div class="modal-sub">이 시점의 계약 ${s.contracts.length}건 · 보증금 ${fmt(dep)}원 · 월 고정 ${fmt(rent)}원</div>
+    <div class="modal-sub">이 시점의 계약 ${(s.contracts||[]).length}건 · 보증금 ${fmt(dep)}원 · 월 고정 ${fmt(rent)}원</div>
     <div style="display:flex;flex-direction:column;gap:11px">${list.map(c=>cardHtml(c,true)).join('') || '<div class="empty"><div class="empty-title">계약 없음</div></div>'}</div>
     <div class="modal-actions">
       <button class="modal-btn cancel" id="snapBack">‹ 목록</button>
@@ -979,8 +1153,9 @@ function loadSample() {
     { title:'웹사이트 구축 용역', party:'디자인랩', manager:'박지민', type:'용역', status:'done', deposit:8500000, rent:0, maintenance:0, signDate:iso(-180), endDate:iso(-40), notes:'납품 완료 · 잔금 지급 완료' },
     { title:'상가 매매', party:'정한부동산', manager:'김영업', type:'매매', status:'hold', deposit:50000000, rent:0, maintenance:0, signDate:iso(-30), endDate:iso(150), notes:'잔금일 협의 중 · 보류' },
   ];
-  S.forEach(s => contracts.push({ id: uid(), createdAt: Date.now()+Math.floor(Math.random()*1000), attachments:[], ...s }));
-  save(); maybeSnapshot(); renderAll(); showToast('예시 데이터를 추가했어요');
+  S.forEach(s => persistContract({ id: uid(), createdAt: Date.now()+Math.floor(Math.random()*1000), attachments:[], ...s }));
+  setTimeout(maybeSnapshot, 300);
+  showToast('예시 데이터를 추가했어요');
 }
 
 // ── 이벤트 ─────────────────────────────────────────────────
@@ -1008,8 +1183,17 @@ snapView.addEventListener('click', e => {
     const k = restore.dataset.snap;
     if (confirm(`${k} 시점의 내용으로 되돌릴까요? 현재 내용은 자동으로 먼저 보관됩니다.`)) {
       snapshotNow();
-      contracts = JSON.parse(JSON.stringify(snapshots[k].contracts));
-      save(); renderAll(); closeSnap(); showToast(`${k} 시점으로 복원했어요`);
+      const restored = clone(snapshots[k].contracts || []);
+      if (fbUser) {
+        const batch = fbDb.batch();
+        // 현재 계약 모두 삭제 후 복원본으로 교체
+        contracts.forEach(c => batch.delete(userCol().doc(c.id)));
+        restored.forEach(c => { if (!c.id) c.id = uid(); batch.set(userCol().doc(c.id), c); });
+        batch.commit().then(() => showToast(`${k} 시점으로 복원했어요`)).catch(()=>showToast('복원 오류'));
+      } else {
+        contracts = restored; saveLocal(); renderAll(); showToast(`${k} 시점으로 복원했어요`);
+      }
+      closeSnap();
     }
     return;
   }
@@ -1024,7 +1208,7 @@ filterRow.addEventListener('click', e => {
 
 contractList.addEventListener('click', e => {
   const fileChip = e.target.closest('.file-chip');
-  if (fileChip) { const [cid,idx] = fileChip.dataset.file.split(':'); openFile(cid, Number(idx)); return; }
+  if (fileChip) { openFile(fileChip.dataset.file); return; }
   if (selectMode) {
     const card = e.target.closest('.contract-card'); if (!card) return;
     const id = card.dataset.id;
@@ -1056,9 +1240,11 @@ if ('serviceWorker' in navigator) {
 }
 
 // ── 시작 ───────────────────────────────────────────────────
-load();
-maybeSnapshot();
+loadFiles();
+loadLocal();      // 로그인 상태 확인 전, 로컬 데이터로 즉시 표시
+renderAuth();
 renderAll();
+initFirebase();   // 로그인 상태면 Firestore 데이터로 전환
 </script>
 </body>
 </html>
