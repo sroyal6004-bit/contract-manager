@@ -348,6 +348,18 @@
       border-radius: 10px; font-size: 12px; color: var(--blue); line-height: 1.6; margin-bottom: 16px;
     }
 
+    .share-items { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .item-chip {
+      flex: 1; min-width: 92px; padding: 11px 8px;
+      background: var(--bg3); border: 1px solid var(--border2); border-radius: 10px;
+      color: var(--muted); font-family: var(--sans); font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all 0.15s; -webkit-appearance: none;
+    }
+    .item-chip.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-color: transparent; color: #0a0a0f; font-weight: 700;
+    }
+
     #install-banner {
       display: none; position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
       left: 12px; right: 90px; z-index: 100;
@@ -532,7 +544,12 @@
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title">📤 계약 내역 공유</div>
-    <div class="modal-sub">아래 내용을 복사해 카카오톡 등에 붙여넣으세요</div>
+    <div class="modal-sub">포함할 금액 항목을 고르면 아래 내용이 바뀝니다</div>
+    <div class="share-items" id="shareItems">
+      <button class="item-chip active" data-item="deposit">계약금·보증금</button>
+      <button class="item-chip active" data-item="rent">월세</button>
+      <button class="item-chip active" data-item="maintenance">관리비</button>
+    </div>
     <div class="field">
       <textarea id="shareText" readonly style="min-height:240px;font-family:var(--mono);font-size:12px;line-height:1.6"></textarea>
     </div>
@@ -610,6 +627,8 @@ const snapView     = document.getElementById('snapView');
 const shareOverlay = document.getElementById('shareOverlay');
 const shareText    = document.getElementById('shareText');
 const shareNative  = document.getElementById('shareNative');
+const shareItemsEl = document.getElementById('shareItems');
+let shareItems = new Set(['deposit','rent','maintenance']);
 
 const F = {
   title:   document.getElementById('fTitle'),
@@ -1085,37 +1104,52 @@ function updateSelCount() {
   selCount.textContent = selected.size;
   document.getElementById('selShare').disabled = selected.size === 0;
 }
+const ITEM_LABEL = { deposit: '계약금·보증금', rent: '월세', maintenance: '관리비' };
 function buildShareText() {
   const picks = contracts.filter(c => selected.has(c.id));
   sortContracts(picks);
-  let t = `📑 계약 내역 (${picks.length}건)\n`;
+  const keys = ['deposit','rent','maintenance'].filter(k => shareItems.has(k));
+  const onlyOne = keys.length === 1;
+
+  let t = `📑 계약 내역 (${picks.length}건)`;
+  if (keys.length && keys.length < 3) t += ` · ${keys.map(k=>ITEM_LABEL[k]).join('/')}만`;
+  t += `\n`;
+
   picks.forEach((c,i) => {
     t += `\n${i+1}. ${c.title}`;
     if (c.party) t += ` — ${c.party}`;
-    t += `\n   [${(STATUS[c.status]||{}).label||''}]`;
-    const amt = [];
-    if (Number(c.deposit))     amt.push(`계약금·보증금 ${fmt(c.deposit)}원`);
-    if (Number(c.rent))        amt.push(`월세 ${fmt(c.rent)}원`);
-    if (Number(c.maintenance)) amt.push(`관리비 ${fmt(c.maintenance)}원`);
+    if (!onlyOne) t += `\n   [${(STATUS[c.status]||{}).label||''}]`;
+    const amt = keys.filter(k => Number(c[k])).map(k => `${ITEM_LABEL[k]} ${fmt(c[k])}원`);
     if (amt.length) t += `\n   ${amt.join(' / ')}`;
-    if (c.signDate || c.endDate) t += `\n   ${c.signDate||'?'} ~ ${c.endDate||'?'}`;
+    else if (keys.length) t += `\n   (해당 항목 없음)`;
+    if (!onlyOne && (c.signDate || c.endDate)) t += `\n   ${c.signDate||'?'} ~ ${c.endDate||'?'}`;
   });
+
   const sum = k => picks.reduce((s,c)=>s+(Number(c[k])||0),0);
   t += `\n\n━━━━━━━━━━━━━━\n💰 항목별 합계`;
-  t += `\n· 계약금·보증금 : ${fmt(sum('deposit'))}원`;
-  t += `\n· 월세 합계     : ${fmt(sum('rent'))}원`;
-  t += `\n· 관리비 합계   : ${fmt(sum('maintenance'))}원`;
-  t += `\n· 월 고정비(월세+관리비) : ${fmt(sum('rent')+sum('maintenance'))}원`;
+  keys.forEach(k => { t += `\n· ${ITEM_LABEL[k]} 합계 : ${fmt(sum(k))}원`; });
+  if (shareItems.has('rent') && shareItems.has('maintenance')) {
+    t += `\n· 월 고정비(월세+관리비) : ${fmt(sum('rent')+sum('maintenance'))}원`;
+  }
+  if (!keys.length) t += `\n(선택된 항목이 없습니다)`;
   return t;
 }
+function refreshShareText() { shareText.value = buildShareText(); }
 function shareSelected() {
   if (!selected.size) return;
-  shareText.value = buildShareText();
+  refreshShareText();
   const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
   shareNative.style.display = (isMobile && navigator.share) ? 'block' : 'none';
   shareOverlay.classList.add('show');
   document.body.style.overflow = 'hidden';
 }
+shareItemsEl.addEventListener('click', e => {
+  const chip = e.target.closest('.item-chip'); if (!chip) return;
+  const k = chip.dataset.item;
+  if (shareItems.has(k)) shareItems.delete(k); else shareItems.add(k);
+  chip.classList.toggle('active', shareItems.has(k));
+  refreshShareText();
+});
 function closeShare() { shareOverlay.classList.remove('show'); document.body.style.overflow=''; }
 async function copyShareText() {
   const text = shareText.value;
