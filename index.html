@@ -527,6 +527,23 @@
   </div>
 </div>
 
+<!-- 공유 모달 -->
+<div class="modal-overlay" id="shareOverlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📤 계약 내역 공유</div>
+    <div class="modal-sub">아래 내용을 복사해 카카오톡 등에 붙여넣으세요</div>
+    <div class="field">
+      <textarea id="shareText" readonly style="min-height:240px;font-family:var(--mono);font-size:12px;line-height:1.6"></textarea>
+    </div>
+    <button class="modal-btn save" id="shareCopy" style="width:100%">📋 복사하기</button>
+    <button class="modal-btn" id="shareNative" style="width:100%;margin-top:10px;background:var(--kakao);color:#191600;display:none">💬 공유 시트 열기 (카톡 등)</button>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" id="shareClose">닫기</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -590,6 +607,9 @@ const selectBar    = document.getElementById('selectBar');
 const selCount     = document.getElementById('selCount');
 const snapOverlay  = document.getElementById('snapOverlay');
 const snapView     = document.getElementById('snapView');
+const shareOverlay = document.getElementById('shareOverlay');
+const shareText    = document.getElementById('shareText');
+const shareNative  = document.getElementById('shareNative');
 
 const F = {
   title:   document.getElementById('fTitle'),
@@ -1088,15 +1108,29 @@ function buildShareText() {
   t += `\n· 월 고정비(월세+관리비) : ${fmt(sum('rent')+sum('maintenance'))}원`;
   return t;
 }
-async function shareSelected() {
+function shareSelected() {
   if (!selected.size) return;
-  const text = buildShareText();
-  if (navigator.share) {
-    try { await navigator.share({ title: '계약 내역', text }); return; }
-    catch (e) { if (e && e.name === 'AbortError') return; }
+  shareText.value = buildShareText();
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  shareNative.style.display = (isMobile && navigator.share) ? 'block' : 'none';
+  shareOverlay.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeShare() { shareOverlay.classList.remove('show'); document.body.style.overflow=''; }
+async function copyShareText() {
+  const text = shareText.value;
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('복사했어요! 카카오톡에 붙여넣기(Ctrl+V) 하세요');
+  } catch {
+    shareText.focus(); shareText.select();
+    try { document.execCommand('copy'); showToast('복사했어요! 카톡에 붙여넣기 하세요'); }
+    catch { showToast('텍스트를 길게 눌러 직접 복사해주세요'); }
   }
-  try { await navigator.clipboard.writeText(text); showToast('공유 텍스트를 복사했어요. 카톡에 붙여넣기 하세요'); }
-  catch { prompt('아래 내용을 복사해 카톡에 붙여넣으세요', text); }
+}
+async function nativeShare() {
+  try { await navigator.share({ title: '계약 내역', text: shareText.value }); }
+  catch (e) { if (e && e.name !== 'AbortError') showToast('공유를 취소했거나 지원되지 않아요'); }
 }
 
 // ── 보관 기록 모달 ──────────────────────────────────────────
@@ -1171,6 +1205,10 @@ searchInput.addEventListener('input', e => { search = e.target.value.trim(); ren
 shareModeBtn.addEventListener('click', () => toggleSelectMode(!selectMode));
 document.getElementById('selCancel').addEventListener('click', () => toggleSelectMode(false));
 document.getElementById('selShare').addEventListener('click', shareSelected);
+document.getElementById('shareCopy').addEventListener('click', copyShareText);
+document.getElementById('shareClose').addEventListener('click', closeShare);
+shareNative.addEventListener('click', nativeShare);
+shareOverlay.addEventListener('click', e => { if (e.target === shareOverlay) closeShare(); });
 
 snapBtn.addEventListener('click', openSnapList);
 snapOverlay.addEventListener('click', e => { if (e.target === snapOverlay) closeSnap(); });
