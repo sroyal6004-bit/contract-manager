@@ -32,6 +32,7 @@
       --blue: #6a9ae0;
       --red: #e06080;
       --yellow: #e0c060;
+      --kakao: #fee500;
       --mono: 'DM Mono', monospace;
       --sans: 'Noto Sans KR', sans-serif;
     }
@@ -57,12 +58,8 @@
       border-bottom: 1px solid var(--border);
     }
     .header-badge {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.2em;
-      color: var(--accent);
-      text-transform: uppercase;
-      margin-bottom: 4px;
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em;
+      color: var(--accent); text-transform: uppercase; margin-bottom: 4px;
     }
     .header-title { font-size: 22px; font-weight: 900; color: var(--text); }
     .header-sub { font-size: 12px; color: var(--muted); margin-top: 3px; font-weight: 300; }
@@ -70,45 +67,42 @@
     .main { padding: 20px; max-width: 640px; margin: 0 auto; }
 
     /* ── Stat grid ── */
-    .stat-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-bottom: 22px;
-    }
+    .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 22px; }
     .stat-card {
       background: linear-gradient(135deg, var(--bg3), var(--bg2));
-      border: 1px solid var(--border2);
-      border-radius: 14px;
-      padding: 16px;
+      border: 1px solid var(--border2); border-radius: 14px; padding: 16px;
     }
     .stat-card.wide { grid-column: span 2; }
     .stat-label {
-      font-family: var(--mono); font-size: 10px;
-      color: var(--muted); letter-spacing: 0.1em;
-      text-transform: uppercase; margin-bottom: 8px;
+      font-family: var(--mono); font-size: 10px; color: var(--muted);
+      letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px;
     }
-    .stat-value {
-      font-family: var(--mono);
-      font-size: 24px; font-weight: 700;
-      color: var(--text); letter-spacing: -0.02em;
-    }
-    .stat-card.wide .stat-value { font-size: 28px; color: var(--accent); }
-    .stat-value span { font-size: 13px; color: var(--muted); margin-left: 3px; font-weight: 400; }
+    .stat-value { font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+    .stat-card.wide .stat-value { font-size: 26px; color: var(--accent); }
+    .stat-value span { font-size: 12px; color: var(--muted); margin-left: 3px; font-weight: 400; }
     .stat-value.hl-green { color: var(--green); }
     .stat-value.hl-yellow { color: var(--yellow); }
+    .stat-value.hl-blue { color: var(--blue); }
 
     /* ── Divider ── */
-    .divider {
-      display: flex; align-items: center; gap: 10px;
-      margin: 8px 0 16px;
-    }
+    .divider { display: flex; align-items: center; gap: 10px; margin: 8px 0 16px; }
     .divider-label {
-      font-family: var(--mono); font-size: 10px;
-      letter-spacing: 0.15em; color: var(--accent);
-      text-transform: uppercase; white-space: nowrap;
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em;
+      color: var(--accent); text-transform: uppercase; white-space: nowrap;
     }
     .divider-line { flex: 1; height: 1px; background: var(--border); }
+
+    /* ── Toolbar ── */
+    .toolbar { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
+    .tool-btn {
+      padding: 12px; background: var(--bg2); border: 1px solid var(--border2);
+      border-radius: 11px; color: var(--text2);
+      font-family: var(--sans); font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: all 0.15s; -webkit-appearance: none;
+    }
+    .tool-btn:active { transform: scale(0.98); }
+    .tool-btn.excel { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+    .tool-btn.share { background: #14120a; border-color: #2a2410; color: var(--kakao); }
 
     /* ── Search + filter ── */
     .search-box {
@@ -118,26 +112,22 @@
     }
     .search-box input {
       flex: 1; background: none; border: none; outline: none;
-      color: var(--text); font-family: var(--sans); font-size: 14px;
-      padding: 13px 0;
+      color: var(--text); font-family: var(--sans); font-size: 14px; padding: 13px 0;
     }
     .search-box input::placeholder { color: var(--muted2); }
     .search-icon { font-size: 15px; opacity: 0.6; }
 
     .filter-row {
-      display: flex; gap: 7px; margin-bottom: 18px;
-      overflow-x: auto; padding-bottom: 2px;
+      display: flex; gap: 7px; margin-bottom: 18px; overflow-x: auto; padding-bottom: 2px;
       -ms-overflow-style: none; scrollbar-width: none;
     }
     .filter-row::-webkit-scrollbar { display: none; }
     .filter-chip {
-      flex-shrink: 0;
-      padding: 8px 14px;
+      flex-shrink: 0; padding: 8px 14px;
       background: var(--bg2); border: 1px solid var(--border2);
       border-radius: 20px; color: var(--muted);
       font-family: var(--sans); font-size: 12px; font-weight: 500;
-      cursor: pointer; transition: all 0.15s; white-space: nowrap;
-      -webkit-appearance: none;
+      cursor: pointer; transition: all 0.15s; white-space: nowrap; -webkit-appearance: none;
     }
     .filter-chip.active {
       background: linear-gradient(135deg, var(--accent), var(--accent2));
@@ -148,220 +138,227 @@
     /* ── Contract cards ── */
     .contract-list { display: flex; flex-direction: column; gap: 11px; }
     .contract-card {
-      background: var(--bg2);
-      border: 1px solid var(--border2);
-      border-radius: 14px; padding: 16px;
-      transition: border-color 0.15s;
+      position: relative;
+      background: var(--bg2); border: 1px solid var(--border2);
+      border-radius: 14px; padding: 16px; transition: border-color 0.15s;
     }
     .contract-card:active { border-color: var(--accent2); }
-    .cc-top {
-      display: flex; justify-content: space-between;
-      align-items: flex-start; gap: 10px; margin-bottom: 4px;
+
+    /* select mode */
+    .select-mode .contract-card { padding-left: 48px; cursor: pointer; }
+    .cc-check {
+      display: none; position: absolute; left: 16px; top: 18px;
+      width: 22px; height: 22px; border-radius: 7px;
+      border: 2px solid var(--border2); background: var(--bg3);
+      align-items: center; justify-content: center; font-size: 13px; color: #0a0a0f;
     }
+    .select-mode .cc-check { display: flex; }
+    .contract-card.picked { border-color: var(--accent); }
+    .contract-card.picked .cc-check { background: var(--accent); border-color: var(--accent); }
+
+    .cc-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 4px; }
     .cc-title { font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.3; }
     .cc-party { font-size: 12px; color: var(--muted); margin-top: 2px; }
     .cc-status {
-      flex-shrink: 0;
-      font-family: var(--mono); font-size: 10px; font-weight: 500;
-      padding: 4px 9px; border-radius: 8px; white-space: nowrap;
-      letter-spacing: 0.03em;
+      flex-shrink: 0; font-family: var(--mono); font-size: 10px; font-weight: 500;
+      padding: 4px 9px; border-radius: 8px; white-space: nowrap; letter-spacing: 0.03em;
     }
     .st-active   { color: var(--green);  background: var(--green-bg); border: 1px solid var(--green-border); }
     .st-done     { color: var(--blue);   background: #0a0e18; border: 1px solid #16203a; }
     .st-hold     { color: var(--yellow); background: #14120a; border: 1px solid #2a2410; }
     .st-canceled { color: var(--red);    background: #1a0a0e; border: 1px solid #3a1a1e; }
 
-    .cc-mid {
-      display: flex; align-items: baseline; gap: 8px;
-      margin: 12px 0 10px;
-    }
-    .cc-amount { font-family: var(--mono); font-size: 20px; font-weight: 500; color: var(--text); }
-    .cc-amount span { font-size: 12px; color: var(--muted); margin-left: 2px; }
-    .cc-type {
-      font-family: var(--mono); font-size: 10px; color: var(--muted2);
-      background: var(--bg3); padding: 3px 8px; border-radius: 8px;
-    }
+    /* amount breakdown */
+    .cc-amounts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
+    .amt-pill { background: var(--bg3); border-radius: 9px; padding: 8px 11px; }
+    .amt-k { font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing: 0.05em; display: block; margin-bottom: 2px; }
+    .amt-v { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--text); }
+    .amt-v .u { font-size: 10px; color: var(--muted); margin-left: 1px; }
+    .amt-pill.deposit .amt-v { color: var(--accent); }
 
-    .cc-meta {
-      display: flex; flex-wrap: wrap; gap: 6px 14px;
-      padding-top: 10px; border-top: 1px solid var(--border);
-      font-size: 11px; color: var(--muted);
-    }
-    .cc-meta .k { color: var(--muted2); font-family: var(--mono); }
-    .cc-dday {
-      font-family: var(--mono); font-weight: 500;
-      padding: 2px 7px; border-radius: 6px; font-size: 10px;
-    }
+    .cc-typerow { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; }
+    .cc-type { font-family: var(--mono); font-size: 10px; color: var(--muted2); background: var(--bg3); padding: 3px 8px; border-radius: 8px; }
+    .cc-dday { font-family: var(--mono); font-weight: 500; padding: 2px 7px; border-radius: 6px; font-size: 10px; margin-left: auto; }
     .dday-soon { color: var(--red); background: #1a0a0e; }
     .dday-warn { color: var(--yellow); background: #14120a; }
     .dday-ok { color: var(--muted); background: var(--bg3); }
     .dday-past { color: var(--muted2); background: var(--bg3); }
 
+    .cc-meta {
+      display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px;
+      padding-top: 10px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted);
+    }
+    .cc-meta .k { color: var(--muted2); font-family: var(--mono); }
+
+    .cc-files { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .file-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px;
+      padding: 6px 10px; font-size: 11px; color: var(--text2); cursor: pointer; max-width: 100%;
+    }
+    .file-chip .fn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+
     .cc-notes {
-      margin-top: 10px; padding: 10px;
-      background: #0a0a14; border-radius: 8px;
-      border-left: 2px solid var(--border2);
-      font-size: 12px; color: var(--text2); line-height: 1.6;
-      white-space: pre-wrap; word-break: break-word;
+      margin-top: 10px; padding: 10px; background: #0a0a14; border-radius: 8px;
+      border-left: 2px solid var(--border2); font-size: 12px; color: var(--text2);
+      line-height: 1.6; white-space: pre-wrap; word-break: break-word;
     }
 
     .cc-actions { display: flex; gap: 8px; margin-top: 12px; }
     .cc-btn {
-      flex: 1; padding: 9px;
-      background: transparent; border: 1px solid var(--border2);
-      border-radius: 9px; color: var(--muted);
-      font-family: var(--sans); font-size: 12px; font-weight: 500;
-      cursor: pointer; transition: all 0.15s;
-      -webkit-appearance: none;
+      flex: 1; padding: 9px; background: transparent; border: 1px solid var(--border2);
+      border-radius: 9px; color: var(--muted); font-family: var(--sans);
+      font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; -webkit-appearance: none;
     }
     .cc-btn:active { background: var(--bg3); }
     .cc-btn.del { color: #a05060; border-color: #2a1a20; }
     .cc-btn.del:active { background: #1a0a0e; }
 
-    /* ── Empty state ── */
-    .empty {
-      text-align: center; padding: 60px 20px;
-      color: var(--muted2);
-    }
+    /* ── Empty ── */
+    .empty { text-align: center; padding: 60px 20px; color: var(--muted2); }
     .empty-icon { font-size: 54px; margin-bottom: 14px; opacity: 0.5; }
     .empty-title { font-size: 15px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
     .empty-sub { font-size: 12px; color: var(--muted2); line-height: 1.6; }
 
-    /* ── Toolbar (export) ── */
-    .toolbar { display: flex; gap: 10px; margin-bottom: 18px; }
-    .tool-btn {
-      flex: 1; padding: 12px;
-      background: var(--green-bg); border: 1px solid var(--green-border);
-      border-radius: 11px; color: var(--green);
-      font-family: var(--sans); font-size: 13px; font-weight: 700;
-      cursor: pointer; transition: all 0.15s;
-      -webkit-appearance: none;
-    }
-    .tool-btn:active { transform: scale(0.98); }
-    .tool-btn.ghost { background: transparent; border-color: var(--border2); color: var(--muted); }
-
     /* ── FAB ── */
     .fab {
-      position: fixed;
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
-      right: 20px; z-index: 50;
-      width: 58px; height: 58px;
-      border-radius: 50%; border: none;
+      position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); right: 20px; z-index: 50;
+      width: 58px; height: 58px; border-radius: 50%; border: none;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #0a0a0f; font-size: 30px; font-weight: 300;
-      cursor: pointer;
+      color: #0a0a0f; font-size: 30px; font-weight: 300; cursor: pointer;
       box-shadow: 0 6px 24px rgba(244,169,74,0.35);
       display: flex; align-items: center; justify-content: center;
-      transition: transform 0.15s; line-height: 1;
-      -webkit-appearance: none;
+      transition: transform 0.15s; line-height: 1; -webkit-appearance: none;
     }
     .fab:active { transform: scale(0.92); }
+    .fab.hidden { display: none; }
+
+    /* ── Select action bar ── */
+    .select-bar {
+      display: none; position: fixed; z-index: 60;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); left: 16px; right: 16px;
+      background: var(--bg3); border: 1px solid var(--border2); border-radius: 16px;
+      padding: 12px 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      align-items: center; gap: 10px;
+    }
+    .select-bar.show { display: flex; }
+    .sb-count { font-size: 13px; font-weight: 700; color: var(--text); flex: 1; }
+    .sb-count span { color: var(--accent); }
+    .sb-btn {
+      padding: 11px 16px; border-radius: 11px; border: none;
+      font-family: var(--sans); font-size: 13px; font-weight: 700; cursor: pointer; -webkit-appearance: none;
+    }
+    .sb-btn.cancel { background: transparent; border: 1px solid var(--border2); color: var(--muted); }
+    .sb-btn.go { background: var(--kakao); color: #191600; }
+    .sb-btn:disabled { opacity: 0.4; }
 
     /* ── Modal ── */
     .modal-overlay {
-      position: fixed; inset: 0; z-index: 200;
-      background: rgba(0,0,0,0.6);
-      backdrop-filter: blur(4px);
+      position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
       display: none; align-items: flex-end; justify-content: center;
     }
     .modal-overlay.show { display: flex; }
     .modal {
-      width: 100%; max-width: 640px;
-      max-height: 92vh; overflow-y: auto;
-      background: var(--bg2);
-      border: 1px solid var(--border2);
-      border-radius: 20px 20px 0 0;
-      padding: 8px 20px calc(env(safe-area-inset-bottom, 0px) + 24px);
-      animation: slideUp 0.25s ease-out;
+      width: 100%; max-width: 640px; max-height: 92vh; overflow-y: auto;
+      background: var(--bg2); border: 1px solid var(--border2); border-radius: 20px 20px 0 0;
+      padding: 8px 20px calc(env(safe-area-inset-bottom, 0px) + 24px); animation: slideUp 0.25s ease-out;
     }
     @keyframes slideUp { from { transform: translateY(30px); opacity: 0.5; } to { transform: translateY(0); opacity: 1; } }
-    .modal-handle {
-      width: 40px; height: 4px; background: var(--border2);
-      border-radius: 3px; margin: 8px auto 16px;
-    }
+    .modal-handle { width: 40px; height: 4px; background: var(--border2); border-radius: 3px; margin: 8px auto 16px; }
     .modal-title { font-size: 18px; font-weight: 900; margin-bottom: 4px; }
     .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
 
     .field { margin-bottom: 15px; }
-    .field-label {
-      display: block; font-size: 12px; font-weight: 500;
-      color: var(--text2); margin-bottom: 7px;
-    }
+    .field-label { display: block; font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 7px; }
     .field-label .req { color: var(--accent); margin-left: 3px; }
     .field input, .field select, .field textarea {
-      width: 100%;
-      background: var(--bg3); border: 1px solid var(--border2);
-      border-radius: 11px; padding: 13px 14px;
-      color: var(--text); font-family: var(--sans); font-size: 14px;
-      outline: none; transition: border-color 0.15s;
-      -webkit-appearance: none;
+      width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: 11px; padding: 13px 14px; color: var(--text);
+      font-family: var(--sans); font-size: 14px; outline: none;
+      transition: border-color 0.15s; -webkit-appearance: none;
     }
     .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent2); }
     .field textarea { resize: vertical; min-height: 74px; line-height: 1.5; }
     .field select {
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b6880' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 15px center;
-      padding-right: 38px;
+      background-repeat: no-repeat; background-position: right 15px center; padding-right: 38px;
     }
     .field-row { display: flex; gap: 10px; }
     .field-row .field { flex: 1; }
-
     .amount-hint { font-family: var(--mono); font-size: 11px; color: var(--accent); margin-top: 6px; min-height: 14px; }
+
+    /* attachment */
+    .attach-zone {
+      position: relative; border: 1.5px dashed var(--border2); border-radius: 11px;
+      padding: 16px; text-align: center; background: var(--bg3); cursor: pointer;
+    }
+    .attach-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; font-size: 0; }
+    .attach-zone .az-icon { font-size: 24px; margin-bottom: 4px; }
+    .attach-zone .az-text { font-size: 12px; color: var(--muted); }
+    .attach-list { display: flex; flex-direction: column; gap: 7px; margin-top: 10px; }
+    .attach-item {
+      display: flex; align-items: center; gap: 8px; background: var(--bg3);
+      border: 1px solid var(--border2); border-radius: 9px; padding: 9px 11px; font-size: 12px;
+    }
+    .attach-item .ai-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text2); }
+    .attach-item .ai-size { font-family: var(--mono); font-size: 10px; color: var(--muted2); }
+    .attach-item .ai-del { background: none; border: none; color: var(--red); font-size: 16px; cursor: pointer; padding: 0 2px; line-height: 1; }
 
     .modal-actions { display: flex; gap: 10px; margin-top: 24px; }
     .modal-btn {
-      flex: 1; padding: 15px;
-      border-radius: 12px; border: none;
-      font-family: var(--sans); font-size: 15px; font-weight: 700;
-      cursor: pointer; transition: transform 0.15s;
-      -webkit-appearance: none;
+      flex: 1; padding: 15px; border-radius: 12px; border: none;
+      font-family: var(--sans); font-size: 15px; font-weight: 700; cursor: pointer;
+      transition: transform 0.15s; -webkit-appearance: none;
     }
     .modal-btn:active { transform: scale(0.98); }
     .modal-btn.save { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #0a0a0f; }
     .modal-btn.cancel { background: transparent; border: 1px solid var(--border2); color: var(--muted); }
 
     .form-error {
-      margin-top: 12px; padding: 11px 14px;
-      background: #1a0a0e; border: 1px solid #3a1a1e;
-      border-radius: 10px; font-size: 12px; color: var(--red);
-      display: none;
+      margin-top: 12px; padding: 11px 14px; background: #1a0a0e; border: 1px solid #3a1a1e;
+      border-radius: 10px; font-size: 12px; color: var(--red); display: none;
+    }
+
+    /* snapshot */
+    .snap-item {
+      display: flex; align-items: center; gap: 12px; padding: 14px;
+      background: var(--bg3); border: 1px solid var(--border2); border-radius: 12px;
+      margin-bottom: 9px; cursor: pointer; transition: border-color 0.15s;
+    }
+    .snap-item:active { border-color: var(--accent); }
+    .snap-date { font-family: var(--mono); font-size: 15px; font-weight: 500; color: var(--accent); }
+    .snap-meta { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.5; }
+    .snap-arrow { margin-left: auto; color: var(--muted2); font-size: 18px; }
+    .info-box {
+      padding: 12px 14px; background: #0a0e18; border: 1px solid #16203a;
+      border-radius: 10px; font-size: 12px; color: var(--blue); line-height: 1.6; margin-bottom: 16px;
     }
 
     /* ── Install banner ── */
     #install-banner {
-      display: none;
-      position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+      display: none; position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
       left: 12px; right: 90px; z-index: 100;
-      background: linear-gradient(135deg, #1a1600, #261c00);
-      border: 1px solid #3a2c00;
-      border-radius: 14px; padding: 12px 14px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      background: linear-gradient(135deg, #1a1600, #261c00); border: 1px solid #3a2c00;
+      border-radius: 14px; padding: 12px 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.6);
     }
     #install-banner.show { display: flex; align-items: center; gap: 10px; }
     .banner-text { flex: 1; font-size: 12px; color: #d4a030; line-height: 1.4; }
     .banner-text strong { color: var(--accent); font-size: 13px; display: block; margin-bottom: 1px; }
     .banner-btn {
-      padding: 9px 14px;
-      background: var(--accent); border: none; border-radius: 10px;
-      font-family: var(--sans); font-size: 12px; font-weight: 700;
-      color: #0a0a0f; cursor: pointer; white-space: nowrap;
-      -webkit-appearance: none;
+      padding: 9px 14px; background: var(--accent); border: none; border-radius: 10px;
+      font-family: var(--sans); font-size: 12px; font-weight: 700; color: #0a0a0f;
+      cursor: pointer; white-space: nowrap; -webkit-appearance: none;
     }
-    .banner-close {
-      background: none; border: none; color: var(--muted);
-      font-size: 18px; cursor: pointer; padding: 2px; line-height: 1;
-      -webkit-appearance: none;
-    }
+    .banner-close { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 2px; line-height: 1; -webkit-appearance: none; }
 
     .toast {
       position: fixed; left: 50%; transform: translateX(-50%);
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
-      z-index: 300;
-      background: var(--bg3); border: 1px solid var(--border2);
-      color: var(--text); font-size: 13px; font-weight: 500;
-      padding: 12px 20px; border-radius: 12px;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 90px); z-index: 300;
+      background: var(--bg3); border: 1px solid var(--border2); color: var(--text);
+      font-size: 13px; font-weight: 500; padding: 12px 20px; border-radius: 12px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.6);
       opacity: 0; pointer-events: none; transition: opacity 0.25s, transform 0.25s;
+      max-width: 90%; text-align: center;
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(-6px); }
   </style>
@@ -371,17 +368,17 @@
   <div class="header">
     <div class="header-badge">계약 기록 관리 · PWA</div>
     <div class="header-title">📑 계약서 기록 관리</div>
-    <div class="header-sub">계약을 기록하고 · 상태와 만료일을 한눈에 · 엑셀로 내보내기</div>
+    <div class="header-sub">계약금·월세·관리비 · 계약서 첨부 · 카톡 공유 · 월별 자동 보관</div>
   </div>
 
   <div class="main">
-    <!-- 통계 -->
     <div class="stat-grid" id="statGrid"></div>
 
-    <!-- 도구 -->
     <div class="toolbar">
-      <button class="tool-btn" id="exportBtn">📥 엑셀 내보내기</button>
-      <button class="tool-btn ghost" id="sampleBtn">✨ 예시 데이터</button>
+      <button class="tool-btn share" id="shareModeBtn">📤 선택 공유</button>
+      <button class="tool-btn" id="snapBtn">📅 보관 기록</button>
+      <button class="tool-btn excel" id="exportBtn">📥 엑셀</button>
+      <button class="tool-btn" id="sampleBtn">✨ 예시</button>
     </div>
 
     <div class="divider">
@@ -389,22 +386,24 @@
       <div class="divider-line"></div>
     </div>
 
-    <!-- 검색 -->
     <div class="search-box">
       <span class="search-icon">🔍</span>
       <input type="text" id="searchInput" placeholder="계약명 · 거래처 · 담당자 검색"/>
     </div>
 
-    <!-- 필터 -->
     <div class="filter-row" id="filterRow"></div>
-
-    <!-- 목록 -->
     <div class="contract-list" id="contractList"></div>
   </div>
 </div>
 
-<!-- FAB -->
 <button class="fab" id="addFab" aria-label="계약 추가">+</button>
+
+<!-- 선택 공유 액션바 -->
+<div class="select-bar" id="selectBar">
+  <div class="sb-count"><span id="selCount">0</span>건 선택됨</div>
+  <button class="sb-btn cancel" id="selCancel">취소</button>
+  <button class="sb-btn go" id="selShare" disabled>공유하기</button>
+</div>
 
 <!-- 설치 배너 -->
 <div id="install-banner">
@@ -443,30 +442,34 @@
       <div class="field">
         <label class="field-label">계약 유형</label>
         <select id="fType">
-          <option>매매</option>
-          <option>임대차</option>
-          <option>용역</option>
-          <option>공급</option>
-          <option>위탁</option>
-          <option>고용</option>
-          <option>기타</option>
+          <option>임대차</option><option>매매</option><option>용역</option>
+          <option>공급</option><option>위탁</option><option>고용</option><option>기타</option>
         </select>
       </div>
       <div class="field">
         <label class="field-label">상태</label>
         <select id="fStatus">
-          <option value="active">진행중</option>
-          <option value="done">완료</option>
-          <option value="hold">보류</option>
-          <option value="canceled">해지</option>
+          <option value="active">진행중</option><option value="done">완료</option>
+          <option value="hold">보류</option><option value="canceled">해지</option>
         </select>
       </div>
     </div>
 
     <div class="field">
-      <label class="field-label">계약 금액 (원)</label>
-      <input type="text" id="fAmount" inputmode="numeric" placeholder="예: 12000000"/>
-      <div class="amount-hint" id="amountHint"></div>
+      <label class="field-label">계약금 / 보증금 (원)</label>
+      <input type="text" id="fDeposit" inputmode="numeric" placeholder="예: 10000000"/>
+      <div class="amount-hint" id="depositHint"></div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label">월세 (원)</label>
+        <input type="text" id="fRent" inputmode="numeric" placeholder="예: 800000"/>
+      </div>
+      <div class="field">
+        <label class="field-label">관리비 (원)</label>
+        <input type="text" id="fMaint" inputmode="numeric" placeholder="예: 100000"/>
+      </div>
     </div>
 
     <div class="field-row">
@@ -478,6 +481,16 @@
         <label class="field-label">만료일</label>
         <input type="date" id="fEndDate"/>
       </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">계약서 첨부 <span style="color:var(--muted2);font-weight:400">(사진·PDF, 파일당 2MB 이하)</span></label>
+      <div class="attach-zone">
+        <input type="file" id="fFiles" accept="image/*,application/pdf" multiple/>
+        <div class="az-icon">📎</div>
+        <div class="az-text">탭하여 계약서 파일 첨부</div>
+      </div>
+      <div class="attach-list" id="attachList"></div>
     </div>
 
     <div class="field">
@@ -494,15 +507,28 @@
   </div>
 </div>
 
+<!-- 보관 기록 / 뷰어 모달 -->
+<div class="modal-overlay" id="snapOverlay">
+  <div class="modal" id="snapModal">
+    <div class="modal-handle"></div>
+    <div id="snapView"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 // ── 상태 ───────────────────────────────────────────────────
 const STORE_KEY = 'contracts_v1';
+const SNAP_KEY  = 'contracts_snapshots_v1';
 let contracts = [];
+let snapshots = {};      // { "2026-07": {savedAt, contracts:[...]} }
 let filter = 'all';
 let search = '';
 let editingId = null;
+let draftFiles = [];     // 편집 중 첨부파일 [{name,type,size,data}]
+let selectMode = false;
+let selected = new Set();
 
 const STATUS = {
   active:   { label: '진행중', cls: 'st-active' },
@@ -518,38 +544,64 @@ const contractList = document.getElementById('contractList');
 const searchInput  = document.getElementById('searchInput');
 const exportBtn    = document.getElementById('exportBtn');
 const sampleBtn    = document.getElementById('sampleBtn');
+const shareModeBtn = document.getElementById('shareModeBtn');
+const snapBtn      = document.getElementById('snapBtn');
 const addFab       = document.getElementById('addFab');
 const overlay      = document.getElementById('modalOverlay');
 const modalTitle   = document.getElementById('modalTitle');
 const formError    = document.getElementById('formError');
-const amountHint   = document.getElementById('amountHint');
+const depositHint  = document.getElementById('depositHint');
+const attachList   = document.getElementById('attachList');
 const toast        = document.getElementById('toast');
+const selectBar    = document.getElementById('selectBar');
+const selCount     = document.getElementById('selCount');
+const snapOverlay  = document.getElementById('snapOverlay');
+const snapView     = document.getElementById('snapView');
 
 const F = {
-  title:    document.getElementById('fTitle'),
-  party:    document.getElementById('fParty'),
-  manager:  document.getElementById('fManager'),
-  type:     document.getElementById('fType'),
-  status:   document.getElementById('fStatus'),
-  amount:   document.getElementById('fAmount'),
-  signDate: document.getElementById('fSignDate'),
-  endDate:  document.getElementById('fEndDate'),
-  notes:    document.getElementById('fNotes'),
+  title:   document.getElementById('fTitle'),
+  party:   document.getElementById('fParty'),
+  manager: document.getElementById('fManager'),
+  type:    document.getElementById('fType'),
+  status:  document.getElementById('fStatus'),
+  deposit: document.getElementById('fDeposit'),
+  rent:    document.getElementById('fRent'),
+  maint:   document.getElementById('fMaint'),
+  signDate:document.getElementById('fSignDate'),
+  endDate: document.getElementById('fEndDate'),
+  notes:   document.getElementById('fNotes'),
 };
 
 // ── 저장/로드 ───────────────────────────────────────────────
 function load() {
-  try { contracts = JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
-  catch { contracts = []; }
+  try { contracts = JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch { contracts = []; }
+  try { snapshots = JSON.parse(localStorage.getItem(SNAP_KEY)) || {}; } catch { snapshots = {}; }
+  // 하위호환: 예전 amount → deposit 으로
+  contracts.forEach(c => {
+    if (c.deposit === undefined && c.amount !== undefined) c.deposit = c.amount;
+    if (c.rent === undefined) c.rent = 0;
+    if (c.maintenance === undefined) c.maintenance = 0;
+    if (!Array.isArray(c.attachments)) c.attachments = [];
+  });
 }
 function save() {
-  localStorage.setItem(STORE_KEY, JSON.stringify(contracts));
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(contracts)); return true; }
+  catch (e) {
+    alert('저장 공간이 부족합니다. 첨부 파일 크기를 줄이거나 오래된 계약을 정리해주세요.');
+    return false;
+  }
+}
+function saveSnapshots() {
+  try { localStorage.setItem(SNAP_KEY, JSON.stringify(snapshots)); } catch (e) {}
 }
 
 // ── 유틸 ───────────────────────────────────────────────────
 function fmt(n) { return (Number(n) || 0).toLocaleString('ko-KR'); }
+function won(n) { return '₩ ' + fmt(n); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function monthKey(d) { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
+function fileSize(b) { return b < 1024 ? b+'B' : b < 1048576 ? (b/1024).toFixed(0)+'KB' : (b/1048576).toFixed(1)+'MB'; }
 
 function daysUntil(dateStr) {
   if (!dateStr) return null;
@@ -557,112 +609,138 @@ function daysUntil(dateStr) {
   const end = new Date(dateStr + 'T00:00:00');
   return Math.round((end - today) / 86400000);
 }
-
 function ddayInfo(dateStr, status) {
   const d = daysUntil(dateStr);
   if (d === null) return null;
-  if (status === 'done' || status === 'canceled') {
-    return { text: dateStr.replace(/-/g,'.').slice(2), cls: 'dday-ok' };
-  }
+  if (status === 'done' || status === 'canceled') return { text: dateStr.replace(/-/g,'.').slice(2), cls: 'dday-ok' };
   if (d < 0)   return { text: `만료 ${-d}일 경과`, cls: 'dday-past' };
   if (d === 0) return { text: '오늘 만료', cls: 'dday-soon' };
   if (d <= 30) return { text: `D-${d}`, cls: 'dday-soon' };
   if (d <= 90) return { text: `D-${d}`, cls: 'dday-warn' };
   return { text: `D-${d}`, cls: 'dday-ok' };
 }
-
 function showToast(msg) {
   toast.textContent = msg;
   toast.classList.add('show');
   clearTimeout(showToast._t);
-  showToast._t = setTimeout(() => toast.classList.remove('show'), 1900);
+  showToast._t = setTimeout(() => toast.classList.remove('show'), 2100);
+}
+
+// ── 월별 자동 보관(스냅샷) ──────────────────────────────────
+function maybeSnapshot() {
+  if (!contracts.length) return;
+  const key = monthKey();
+  if (snapshots[key]) return;         // 이번 달 이미 보관됨
+  snapshots[key] = { savedAt: new Date().toISOString(), contracts: JSON.parse(JSON.stringify(contracts)) };
+  saveSnapshots();
+}
+function snapshotNow() {
+  const key = monthKey();
+  snapshots[key] = { savedAt: new Date().toISOString(), contracts: JSON.parse(JSON.stringify(contracts)) };
+  saveSnapshots();
+  showToast('현재 계약 내용을 보관했어요');
 }
 
 // ── 통계 렌더 ───────────────────────────────────────────────
 function renderStats() {
   const total = contracts.length;
   const active = contracts.filter(c => c.status === 'active').length;
-  const sum = contracts
-    .filter(c => c.status !== 'canceled')
-    .reduce((s, c) => s + (Number(c.amount) || 0), 0);
+  const deposit = contracts.filter(c => c.status !== 'canceled').reduce((s,c)=>s+(Number(c.deposit)||0),0);
+  const monthly = contracts.filter(c => c.status === 'active').reduce((s,c)=>s+(Number(c.rent)||0)+(Number(c.maintenance)||0),0);
   const expiring = contracts.filter(c => {
     if (c.status !== 'active') return false;
-    const d = daysUntil(c.endDate);
-    return d !== null && d >= 0 && d <= 30;
+    const d = daysUntil(c.endDate); return d !== null && d >= 0 && d <= 30;
   }).length;
 
   statGrid.innerHTML = `
-    <div class="stat-card">
-      <div class="stat-label">전체 계약</div>
-      <div class="stat-value">${total}<span>건</span></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">진행중</div>
-      <div class="stat-value hl-green">${active}<span>건</span></div>
-    </div>
-    <div class="stat-card wide">
-      <div class="stat-label">총 계약금액 (해지 제외)</div>
-      <div class="stat-value">₩ ${fmt(sum)}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">만료 임박 (30일)</div>
-      <div class="stat-value ${expiring ? 'hl-yellow' : ''}">${expiring}<span>건</span></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">완료</div>
-      <div class="stat-value">${contracts.filter(c=>c.status==='done').length}<span>건</span></div>
-    </div>`;
+    <div class="stat-card"><div class="stat-label">전체 계약</div><div class="stat-value">${total}<span>건</span></div></div>
+    <div class="stat-card"><div class="stat-label">진행중</div><div class="stat-value hl-green">${active}<span>건</span></div></div>
+    <div class="stat-card wide"><div class="stat-label">총 계약금·보증금 (해지 제외)</div><div class="stat-value">${won(deposit)}</div></div>
+    <div class="stat-card"><div class="stat-label">월 고정 (월세+관리비)</div><div class="stat-value hl-blue">${fmt(monthly)}<span>원</span></div></div>
+    <div class="stat-card"><div class="stat-label">만료 임박 (30일)</div><div class="stat-value ${expiring?'hl-yellow':''}">${expiring}<span>건</span></div></div>`;
 }
 
-// ── 필터 칩 렌더 ────────────────────────────────────────────
+// ── 필터 렌더 ───────────────────────────────────────────────
 function renderFilters() {
   const counts = {
     all: contracts.length,
-    active: contracts.filter(c => c.status === 'active').length,
-    done: contracts.filter(c => c.status === 'done').length,
-    hold: contracts.filter(c => c.status === 'hold').length,
-    canceled: contracts.filter(c => c.status === 'canceled').length,
+    active: contracts.filter(c=>c.status==='active').length,
+    done: contracts.filter(c=>c.status==='done').length,
+    hold: contracts.filter(c=>c.status==='hold').length,
+    canceled: contracts.filter(c=>c.status==='canceled').length,
   };
-  const chips = [
-    { key: 'all', label: '전체' },
-    { key: 'active', label: '진행중' },
-    { key: 'done', label: '완료' },
-    { key: 'hold', label: '보류' },
-    { key: 'canceled', label: '해지' },
-  ];
-  filterRow.innerHTML = chips.map(c => `
-    <button class="filter-chip ${filter === c.key ? 'active' : ''}" data-filter="${c.key}">
-      ${c.label}<span class="cnt">${counts[c.key]}</span>
-    </button>`).join('');
+  const chips = [['all','전체'],['active','진행중'],['done','완료'],['hold','보류'],['canceled','해지']];
+  filterRow.innerHTML = chips.map(([k,l]) => `
+    <button class="filter-chip ${filter===k?'active':''}" data-filter="${k}">${l}<span class="cnt">${counts[k]}</span></button>`).join('');
+}
+
+// ── 카드 HTML ───────────────────────────────────────────────
+function amountsHtml(c) {
+  const parts = [];
+  if (Number(c.deposit))     parts.push(`<div class="amt-pill deposit"><span class="amt-k">계약금·보증금</span><span class="amt-v">${fmt(c.deposit)}<span class="u">원</span></span></div>`);
+  if (Number(c.rent))        parts.push(`<div class="amt-pill"><span class="amt-k">월세</span><span class="amt-v">${fmt(c.rent)}<span class="u">원</span></span></div>`);
+  if (Number(c.maintenance)) parts.push(`<div class="amt-pill"><span class="amt-k">관리비</span><span class="amt-v">${fmt(c.maintenance)}<span class="u">원</span></span></div>`);
+  if (!parts.length) parts.push(`<div class="amt-pill"><span class="amt-k">금액</span><span class="amt-v">0<span class="u">원</span></span></div>`);
+  return `<div class="cc-amounts">${parts.join('')}</div>`;
+}
+function cardHtml(c, readonly) {
+  const st = STATUS[c.status] || STATUS.active;
+  const dd = ddayInfo(c.endDate, c.status);
+  const meta = [];
+  if (c.signDate) meta.push(`<span><span class="k">체결</span> ${c.signDate.replace(/-/g,'.')}</span>`);
+  if (c.endDate)  meta.push(`<span><span class="k">만료</span> ${c.endDate.replace(/-/g,'.')}</span>`);
+  if (c.manager)  meta.push(`<span><span class="k">담당</span> ${esc(c.manager)}</span>`);
+  const files = (c.attachments||[]).map((f,i) =>
+    `<span class="file-chip" data-file="${c.id}:${i}">📄 <span class="fn">${esc(f.name)}</span></span>`).join('');
+  const picked = selected.has(c.id) ? 'picked' : '';
+  return `
+    <div class="contract-card ${picked}" data-id="${c.id}">
+      <div class="cc-check">✓</div>
+      <div class="cc-top">
+        <div>
+          <div class="cc-title">${esc(c.title)}</div>
+          ${c.party ? `<div class="cc-party">${esc(c.party)}</div>` : ''}
+        </div>
+        <div class="cc-status ${st.cls}">${st.label}</div>
+      </div>
+      ${amountsHtml(c)}
+      <div class="cc-typerow">
+        <div class="cc-type">${esc(c.type || '기타')}</div>
+        ${dd ? `<div class="cc-dday ${dd.cls}">${dd.text}</div>` : ''}
+      </div>
+      ${meta.length ? `<div class="cc-meta">${meta.join('')}</div>` : ''}
+      ${files ? `<div class="cc-files">${files}</div>` : ''}
+      ${c.notes ? `<div class="cc-notes">${esc(c.notes)}</div>` : ''}
+      ${readonly ? '' : `<div class="cc-actions">
+        <button class="cc-btn edit" data-id="${c.id}">✏️ 수정</button>
+        <button class="cc-btn del" data-id="${c.id}">🗑 삭제</button>
+      </div>`}
+    </div>`;
 }
 
 // ── 목록 렌더 ───────────────────────────────────────────────
+function sortContracts(list) {
+  return list.sort((a,b) => {
+    const rank = s => s==='active'?0 : s==='hold'?1 : s==='done'?2 : 3;
+    if (rank(a.status)!==rank(b.status)) return rank(a.status)-rank(b.status);
+    const da = daysUntil(a.endDate), db = daysUntil(b.endDate);
+    if (a.status==='active' && b.status==='active') {
+      if (da===null) return 1; if (db===null) return -1; return da-db;
+    }
+    return (b.createdAt||0)-(a.createdAt||0);
+  });
+}
 function renderList() {
   let list = contracts.slice();
-
   if (filter !== 'all') list = list.filter(c => c.status === filter);
   if (search) {
     const q = search.toLowerCase();
     list = list.filter(c =>
-      (c.title || '').toLowerCase().includes(q) ||
-      (c.party || '').toLowerCase().includes(q) ||
-      (c.manager || '').toLowerCase().includes(q) ||
-      (c.type || '').toLowerCase().includes(q)
-    );
+      (c.title||'').toLowerCase().includes(q) || (c.party||'').toLowerCase().includes(q) ||
+      (c.manager||'').toLowerCase().includes(q) || (c.type||'').toLowerCase().includes(q));
   }
-
-  // 정렬: 진행중 우선 → 만료 임박 순 → 최신 등록 순
-  list.sort((a, b) => {
-    const rank = s => s === 'active' ? 0 : s === 'hold' ? 1 : s === 'done' ? 2 : 3;
-    if (rank(a.status) !== rank(b.status)) return rank(a.status) - rank(b.status);
-    const da = daysUntil(a.endDate), db = daysUntil(b.endDate);
-    if (a.status === 'active' && b.status === 'active') {
-      if (da === null) return 1;
-      if (db === null) return -1;
-      return da - db;
-    }
-    return (b.createdAt || 0) - (a.createdAt || 0);
-  });
+  sortContracts(list);
+  contractList.classList.toggle('select-mode', selectMode);
 
   if (!list.length) {
     contractList.innerHTML = `
@@ -673,177 +751,236 @@ function renderList() {
       </div>`;
     return;
   }
-
-  contractList.innerHTML = list.map(c => {
-    const st = STATUS[c.status] || STATUS.active;
-    const dd = ddayInfo(c.endDate, c.status);
-    const metaParts = [];
-    if (c.signDate) metaParts.push(`<span><span class="k">체결</span> ${c.signDate.replace(/-/g,'.')}</span>`);
-    if (c.endDate) metaParts.push(`<span><span class="k">만료</span> ${c.endDate.replace(/-/g,'.')}</span>`);
-    if (c.manager) metaParts.push(`<span><span class="k">담당</span> ${esc(c.manager)}</span>`);
-    return `
-      <div class="contract-card" data-id="${c.id}">
-        <div class="cc-top">
-          <div>
-            <div class="cc-title">${esc(c.title)}</div>
-            ${c.party ? `<div class="cc-party">${esc(c.party)}</div>` : ''}
-          </div>
-          <div class="cc-status ${st.cls}">${st.label}</div>
-        </div>
-        <div class="cc-mid">
-          <div class="cc-amount">₩ ${fmt(c.amount)}</div>
-          <div class="cc-type">${esc(c.type || '기타')}</div>
-          ${dd ? `<div class="cc-dday ${dd.cls}" style="margin-left:auto">${dd.text}</div>` : ''}
-        </div>
-        ${metaParts.length ? `<div class="cc-meta">${metaParts.join('')}</div>` : ''}
-        ${c.notes ? `<div class="cc-notes">${esc(c.notes)}</div>` : ''}
-        <div class="cc-actions">
-          <button class="cc-btn edit" data-id="${c.id}">✏️ 수정</button>
-          <button class="cc-btn del" data-id="${c.id}">🗑 삭제</button>
-        </div>
-      </div>`;
-  }).join('');
+  contractList.innerHTML = list.map(c => cardHtml(c, false)).join('');
 }
+function renderAll() { renderStats(); renderFilters(); renderList(); }
 
-function renderAll() {
-  renderStats();
-  renderFilters();
-  renderList();
+// ── 모달(추가/수정) ─────────────────────────────────────────
+function renderAttachList() {
+  attachList.innerHTML = draftFiles.map((f,i) => `
+    <div class="attach-item">
+      <span>${f.type && f.type.includes('pdf') ? '📕' : '🖼'}</span>
+      <span class="ai-name">${esc(f.name)}</span>
+      <span class="ai-size">${fileSize(f.size)}</span>
+      <button class="ai-del" data-idx="${i}">×</button>
+    </div>`).join('');
 }
-
-// ── 모달 ───────────────────────────────────────────────────
 function openModal(id) {
   editingId = id || null;
   formError.style.display = 'none';
   if (id) {
-    const c = contracts.find(x => x.id === id);
-    if (!c) return;
+    const c = contracts.find(x => x.id === id); if (!c) return;
     modalTitle.textContent = '계약 수정';
-    F.title.value = c.title || '';
-    F.party.value = c.party || '';
-    F.manager.value = c.manager || '';
-    F.type.value = c.type || '기타';
-    F.status.value = c.status || 'active';
-    F.amount.value = c.amount || '';
-    F.signDate.value = c.signDate || '';
-    F.endDate.value = c.endDate || '';
-    F.notes.value = c.notes || '';
+    F.title.value=c.title||''; F.party.value=c.party||''; F.manager.value=c.manager||'';
+    F.type.value=c.type||'기타'; F.status.value=c.status||'active';
+    F.deposit.value=c.deposit||''; F.rent.value=c.rent||''; F.maint.value=c.maintenance||'';
+    F.signDate.value=c.signDate||''; F.endDate.value=c.endDate||''; F.notes.value=c.notes||'';
+    draftFiles = (c.attachments||[]).map(f => ({...f}));
   } else {
     modalTitle.textContent = '계약 추가';
-    F.title.value = ''; F.party.value = ''; F.manager.value = '';
-    F.type.value = '매매'; F.status.value = 'active';
-    F.amount.value = ''; F.signDate.value = ''; F.endDate.value = ''; F.notes.value = '';
+    F.title.value=''; F.party.value=''; F.manager.value='';
+    F.type.value='임대차'; F.status.value='active';
+    F.deposit.value=''; F.rent.value=''; F.maint.value='';
+    F.signDate.value=''; F.endDate.value=''; F.notes.value='';
+    draftFiles = [];
   }
-  updateAmountHint();
+  updateDepositHint(); renderAttachList();
   overlay.classList.add('show');
   document.body.style.overflow = 'hidden';
   setTimeout(() => F.title.focus(), 100);
 }
+function closeModal() { overlay.classList.remove('show'); document.body.style.overflow=''; editingId=null; draftFiles=[]; }
 
-function closeModal() {
-  overlay.classList.remove('show');
-  document.body.style.overflow = '';
-  editingId = null;
-}
+function numOf(el) { return Number(String(el.value).replace(/[^0-9]/g,'')) || 0; }
 
 function saveContract() {
   const title = F.title.value.trim();
-  if (!title) {
-    formError.textContent = '⚠️ 계약명을 입력해주세요.';
-    formError.style.display = 'block';
-    return;
-  }
-  const amount = String(F.amount.value).replace(/[^0-9]/g, '');
+  if (!title) { formError.textContent='⚠️ 계약명을 입력해주세요.'; formError.style.display='block'; return; }
   const data = {
-    title,
-    party: F.party.value.trim(),
-    manager: F.manager.value.trim(),
-    type: F.type.value,
-    status: F.status.value,
-    amount: amount ? Number(amount) : 0,
-    signDate: F.signDate.value,
-    endDate: F.endDate.value,
-    notes: F.notes.value.trim(),
+    title, party: F.party.value.trim(), manager: F.manager.value.trim(),
+    type: F.type.value, status: F.status.value,
+    deposit: numOf(F.deposit), rent: numOf(F.rent), maintenance: numOf(F.maint),
+    signDate: F.signDate.value, endDate: F.endDate.value, notes: F.notes.value.trim(),
+    attachments: draftFiles,
   };
-
   if (editingId) {
     const idx = contracts.findIndex(c => c.id === editingId);
     if (idx > -1) contracts[idx] = { ...contracts[idx], ...data };
-    showToast('수정되었습니다');
   } else {
     contracts.push({ id: uid(), createdAt: Date.now(), ...data });
-    showToast('계약이 추가되었습니다');
   }
-  save();
-  closeModal();
-  renderAll();
+  if (!save()) return;
+  showToast(editingId ? '수정되었습니다' : '계약이 추가되었습니다');
+  closeModal(); renderAll();
 }
-
 function deleteContract(id) {
-  const c = contracts.find(x => x.id === id);
-  if (!c) return;
+  const c = contracts.find(x => x.id === id); if (!c) return;
   if (!confirm(`"${c.title}" 계약을 삭제할까요?`)) return;
   contracts = contracts.filter(x => x.id !== id);
-  save();
-  renderAll();
-  showToast('삭제되었습니다');
+  save(); renderAll(); showToast('삭제되었습니다');
+}
+function updateDepositHint() {
+  const n = numOf(F.deposit);
+  if (!n) { depositHint.textContent=''; return; }
+  const eok = Math.floor(n/100000000), man = Math.floor((n%100000000)/10000);
+  let s=''; if(eok) s+=`${eok}억 `; if(man) s+=`${fmt(man)}만 `;
+  depositHint.textContent = '= ' + (s.trim() || fmt(n)) + '원';
 }
 
-function updateAmountHint() {
-  const n = Number(String(F.amount.value).replace(/[^0-9]/g, ''));
-  if (!n) { amountHint.textContent = ''; return; }
-  const eok = Math.floor(n / 100000000);
-  const man = Math.floor((n % 100000000) / 10000);
-  let s = '';
-  if (eok) s += `${eok}억 `;
-  if (man) s += `${fmt(man)}만 `;
-  amountHint.textContent = '= ' + (s.trim() || fmt(n)) + '원';
+// ── 첨부파일 처리 ───────────────────────────────────────────
+document.getElementById('fFiles').addEventListener('change', async e => {
+  const files = Array.from(e.target.files);
+  for (const file of files) {
+    if (file.size > 2*1048576) { showToast(`"${file.name}" 은 2MB를 초과해요`); continue; }
+    const data = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); });
+    draftFiles.push({ name: file.name, type: file.type, size: file.size, data });
+  }
+  renderAttachList();
+  e.target.value = '';
+});
+attachList.addEventListener('click', e => {
+  const b = e.target.closest('.ai-del'); if (!b) return;
+  draftFiles.splice(Number(b.dataset.idx), 1); renderAttachList();
+});
+function openFile(cid, idx) {
+  const c = contracts.find(x=>x.id===cid); if (!c) return;
+  const f = (c.attachments||[])[idx]; if (!f) return;
+  const w = window.open();
+  if (w) w.document.write(`<title>${esc(f.name)}</title><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh">${f.type&&f.type.includes('pdf') ? `<iframe src="${f.data}" style="width:100vw;height:100vh;border:0"></iframe>` : `<img src="${f.data}" style="max-width:100%;max-height:100vh"/>`}</body>`);
 }
 
 // ── 엑셀 내보내기 ─────────────────────────────────────────
 function exportExcel() {
   if (!contracts.length) { showToast('내보낼 계약이 없어요'); return; }
-  const rows = [['계약명','거래처','유형','상태','계약금액(원)','체결일','만료일','담당자','메모']];
-  const sorted = contracts.slice().sort((a,b) => (a.signDate||'').localeCompare(b.signDate||''));
-  sorted.forEach(c => rows.push([
-    c.title, c.party || '', c.type || '',
-    (STATUS[c.status] || {}).label || c.status,
-    Number(c.amount) || 0,
-    c.signDate || '', c.endDate || '', c.manager || '', c.notes || ''
+  const rows = [['계약명','거래처','유형','상태','계약금/보증금','월세','관리비','체결일','만료일','담당자','메모']];
+  contracts.slice().sort((a,b)=>(a.signDate||'').localeCompare(b.signDate||'')).forEach(c => rows.push([
+    c.title, c.party||'', c.type||'', (STATUS[c.status]||{}).label||c.status,
+    Number(c.deposit)||0, Number(c.rent)||0, Number(c.maintenance)||0,
+    c.signDate||'', c.endDate||'', c.manager||'', c.notes||''
   ]));
   rows.push([]);
-  const sum = contracts.filter(c=>c.status!=='canceled').reduce((s,c)=>s+(Number(c.amount)||0),0);
-  rows.push(['합계','','','', sum, '','','','해지 제외']);
-
+  const nc = contracts.filter(c=>c.status!=='canceled');
+  rows.push(['합계','','','',
+    nc.reduce((s,c)=>s+(Number(c.deposit)||0),0),
+    nc.reduce((s,c)=>s+(Number(c.rent)||0),0),
+    nc.reduce((s,c)=>s+(Number(c.maintenance)||0),0),'','','','해지 제외']);
   const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = [{wch:24},{wch:16},{wch:8},{wch:8},{wch:16},{wch:12},{wch:12},{wch:10},{wch:40}];
+  ws['!cols'] = [{wch:24},{wch:16},{wch:8},{wch:8},{wch:16},{wch:12},{wch:12},{wch:12},{wch:12},{wch:10},{wch:36}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '계약 목록');
-
   const now = new Date();
   const dt = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
   XLSX.writeFile(wb, `계약기록_${dt}.xlsx`);
 }
 
+// ── 선택 공유 (카톡 등) ─────────────────────────────────────
+function toggleSelectMode(on) {
+  selectMode = on;
+  selected.clear();
+  selectBar.classList.toggle('show', on);
+  addFab.classList.toggle('hidden', on);
+  shareModeBtn.textContent = on ? '✖ 선택 종료' : '📤 선택 공유';
+  updateSelCount();
+  renderList();
+}
+function updateSelCount() {
+  selCount.textContent = selected.size;
+  document.getElementById('selShare').disabled = selected.size === 0;
+}
+function buildShareText() {
+  const picks = contracts.filter(c => selected.has(c.id));
+  sortContracts(picks);
+  let t = `📑 계약 내역 (${picks.length}건)\n`;
+  picks.forEach((c,i) => {
+    t += `\n${i+1}. ${c.title}`;
+    if (c.party) t += ` — ${c.party}`;
+    t += `\n   [${(STATUS[c.status]||{}).label||''}]`;
+    const amt = [];
+    if (Number(c.deposit))     amt.push(`계약금·보증금 ${fmt(c.deposit)}원`);
+    if (Number(c.rent))        amt.push(`월세 ${fmt(c.rent)}원`);
+    if (Number(c.maintenance)) amt.push(`관리비 ${fmt(c.maintenance)}원`);
+    if (amt.length) t += `\n   ${amt.join(' / ')}`;
+    if (c.signDate || c.endDate) t += `\n   ${c.signDate||'?'} ~ ${c.endDate||'?'}`;
+  });
+  const sum = k => picks.reduce((s,c)=>s+(Number(c[k])||0),0);
+  t += `\n\n━━━━━━━━━━━━━━\n💰 항목별 합계`;
+  t += `\n· 계약금·보증금 : ${fmt(sum('deposit'))}원`;
+  t += `\n· 월세 합계     : ${fmt(sum('rent'))}원`;
+  t += `\n· 관리비 합계   : ${fmt(sum('maintenance'))}원`;
+  t += `\n· 월 고정비(월세+관리비) : ${fmt(sum('rent')+sum('maintenance'))}원`;
+  return t;
+}
+async function shareSelected() {
+  if (!selected.size) return;
+  const text = buildShareText();
+  if (navigator.share) {
+    try { await navigator.share({ title: '계약 내역', text }); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('공유 텍스트를 복사했어요. 카톡에 붙여넣기 하세요');
+  } catch {
+    prompt('아래 내용을 복사해 카톡에 붙여넣으세요', text);
+  }
+}
+
+// ── 보관 기록 모달 ──────────────────────────────────────────
+function openSnapList() {
+  const keys = Object.keys(snapshots).sort().reverse();
+  let html = `<div class="modal-title">📅 보관 기록</div>
+    <div class="modal-sub">매달 자동으로 계약 내용을 보관합니다. 날짜를 누르면 그 시점 내용을 볼 수 있어요.</div>
+    <div class="info-box">현재 계약을 지금 바로 보관하려면 아래 버튼을 누르세요.</div>
+    <button class="modal-btn save" id="snapNowBtn" style="width:100%;margin-bottom:18px">📌 지금 보관하기</button>`;
+  if (!keys.length) {
+    html += `<div class="empty"><div class="empty-icon">🗂</div><div class="empty-title">보관된 기록이 없어요</div><div class="empty-sub">계약을 등록하면 이번 달부터 자동 보관됩니다</div></div>`;
+  } else {
+    html += keys.map(k => {
+      const s = snapshots[k];
+      const d = new Date(s.savedAt);
+      const dep = s.contracts.reduce((a,c)=>a+(Number(c.deposit)||0),0);
+      return `<div class="snap-item" data-snap="${k}">
+        <div>
+          <div class="snap-date">${k}</div>
+          <div class="snap-meta">보관일 ${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} · 계약 ${s.contracts.length}건 · 보증금 ${fmt(dep)}원</div>
+        </div>
+        <div class="snap-arrow">›</div>
+      </div>`;
+    }).join('');
+  }
+  html += `<div class="modal-actions"><button class="modal-btn cancel" id="snapClose">닫기</button></div>`;
+  snapView.innerHTML = html;
+  snapOverlay.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function openSnapDetail(key) {
+  const s = snapshots[key]; if (!s) return;
+  const list = sortContracts(s.contracts.slice());
+  const dep = s.contracts.reduce((a,c)=>a+(Number(c.deposit)||0),0);
+  const rent = s.contracts.reduce((a,c)=>a+(Number(c.rent)||0)+(Number(c.maintenance)||0),0);
+  snapView.innerHTML = `<div class="modal-title">🗂 ${key} 보관본</div>
+    <div class="modal-sub">이 시점의 계약 ${s.contracts.length}건 · 보증금 ${fmt(dep)}원 · 월 고정 ${fmt(rent)}원</div>
+    <div style="display:flex;flex-direction:column;gap:11px">${list.map(c=>cardHtml(c,true)).join('') || '<div class="empty"><div class="empty-title">계약 없음</div></div>'}</div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" id="snapBack">‹ 목록</button>
+      <button class="modal-btn save" id="snapRestore" data-snap="${key}">이 시점으로 복원</button>
+    </div>`;
+}
+function closeSnap() { snapOverlay.classList.remove('show'); document.body.style.overflow=''; }
+
 // ── 예시 데이터 ────────────────────────────────────────────
 function loadSample() {
   if (contracts.length && !confirm('예시 데이터를 추가할까요? (기존 데이터는 유지됩니다)')) return;
   const today = new Date();
-  const iso = (offset) => {
-    const d = new Date(today); d.setDate(d.getDate() + offset);
-    return d.toISOString().slice(0,10);
-  };
-  const samples = [
-    { title: '본사 사무실 임대차 계약', party: '(주)한빛부동산', manager: '김영업', type: '임대차', status: 'active', amount: 36000000, signDate: iso(-320), endDate: iso(20), notes: '2년 계약 · 만기 3개월 전 갱신 협의' },
-    { title: '클라우드 서버 공급 계약', party: '넥스트클라우드', manager: '이수현', type: '공급', status: 'active', amount: 12000000, signDate: iso(-60), endDate: iso(300), notes: '연간 · 월 100만원 자동결제' },
-    { title: '웹사이트 구축 용역', party: '디자인랩', manager: '박지민', type: '용역', status: 'done', amount: 8500000, signDate: iso(-180), endDate: iso(-40), notes: '납품 완료 · 잔금 지급 완료' },
-    { title: '원자재 공급 계약', party: '대성물산', manager: '김영업', type: '공급', status: 'active', amount: 54000000, signDate: iso(-90), endDate: iso(75), notes: '분기별 정산' },
-    { title: '외주 개발 위탁 계약', party: '코드팩토리', manager: '이수현', type: '위탁', status: 'hold', amount: 22000000, signDate: iso(-30), endDate: iso(150), notes: '범위 재협의 중 · 보류' },
+  const iso = o => { const d=new Date(today); d.setDate(d.getDate()+o); return d.toISOString().slice(0,10); };
+  const S = [
+    { title:'본사 사무실 임대차', party:'(주)한빛부동산', manager:'김영업', type:'임대차', status:'active', deposit:30000000, rent:2500000, maintenance:300000, signDate:iso(-320), endDate:iso(20), notes:'2년 계약 · 만기 3개월 전 갱신 협의' },
+    { title:'창고 임대차', party:'대성물류', manager:'이수현', type:'임대차', status:'active', deposit:10000000, rent:800000, maintenance:80000, signDate:iso(-60), endDate:iso(300), notes:'월 초 자동이체' },
+    { title:'웹사이트 구축 용역', party:'디자인랩', manager:'박지민', type:'용역', status:'done', deposit:8500000, rent:0, maintenance:0, signDate:iso(-180), endDate:iso(-40), notes:'납품 완료 · 잔금 지급 완료' },
+    { title:'상가 매매', party:'정한부동산', manager:'김영업', type:'매매', status:'hold', deposit:50000000, rent:0, maintenance:0, signDate:iso(-30), endDate:iso(150), notes:'잔금일 협의 중 · 보류' },
   ];
-  samples.forEach(s => contracts.push({ id: uid(), createdAt: Date.now() + Math.floor(Math.random()*1000), ...s }));
-  save();
-  renderAll();
-  showToast('예시 데이터를 추가했어요');
+  S.forEach(s => contracts.push({ id: uid(), createdAt: Date.now()+Math.floor(Math.random()*1000), attachments:[], ...s }));
+  save(); maybeSnapshot(); renderAll(); showToast('예시 데이터를 추가했어요');
 }
 
 // ── 이벤트 ─────────────────────────────────────────────────
@@ -853,19 +990,49 @@ document.getElementById('modalSave').addEventListener('click', saveContract);
 overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
 exportBtn.addEventListener('click', exportExcel);
 sampleBtn.addEventListener('click', loadSample);
-F.amount.addEventListener('input', updateAmountHint);
-
+F.deposit.addEventListener('input', updateDepositHint);
 searchInput.addEventListener('input', e => { search = e.target.value.trim(); renderList(); });
 
+shareModeBtn.addEventListener('click', () => toggleSelectMode(!selectMode));
+document.getElementById('selCancel').addEventListener('click', () => toggleSelectMode(false));
+document.getElementById('selShare').addEventListener('click', shareSelected);
+
+snapBtn.addEventListener('click', openSnapList);
+snapOverlay.addEventListener('click', e => { if (e.target === snapOverlay) closeSnap(); });
+snapView.addEventListener('click', e => {
+  if (e.target.closest('#snapClose')) { closeSnap(); return; }
+  if (e.target.closest('#snapBack')) { openSnapList(); return; }
+  if (e.target.closest('#snapNowBtn')) { snapshotNow(); openSnapList(); return; }
+  const restore = e.target.closest('#snapRestore');
+  if (restore) {
+    const k = restore.dataset.snap;
+    if (confirm(`${k} 시점의 내용으로 되돌릴까요? 현재 내용은 자동으로 먼저 보관됩니다.`)) {
+      snapshotNow();
+      contracts = JSON.parse(JSON.stringify(snapshots[k].contracts));
+      save(); renderAll(); closeSnap(); showToast(`${k} 시점으로 복원했어요`);
+    }
+    return;
+  }
+  const item = e.target.closest('.snap-item');
+  if (item) openSnapDetail(item.dataset.snap);
+});
+
 filterRow.addEventListener('click', e => {
-  const btn = e.target.closest('.filter-chip');
-  if (!btn) return;
-  filter = btn.dataset.filter;
-  renderFilters();
-  renderList();
+  const btn = e.target.closest('.filter-chip'); if (!btn) return;
+  filter = btn.dataset.filter; renderFilters(); renderList();
 });
 
 contractList.addEventListener('click', e => {
+  const fileChip = e.target.closest('.file-chip');
+  if (fileChip) { const [cid,idx] = fileChip.dataset.file.split(':'); openFile(cid, Number(idx)); return; }
+  if (selectMode) {
+    const card = e.target.closest('.contract-card'); if (!card) return;
+    const id = card.dataset.id;
+    if (selected.has(id)) selected.delete(id); else selected.add(id);
+    card.classList.toggle('picked', selected.has(id));
+    updateSelCount();
+    return;
+  }
   const editBtn = e.target.closest('.cc-btn.edit');
   const delBtn  = e.target.closest('.cc-btn.del');
   if (editBtn) { openModal(editBtn.dataset.id); return; }
@@ -875,20 +1042,13 @@ contractList.addEventListener('click', e => {
 // ── PWA 설치 ───────────────────────────────────────────────
 let deferredPrompt = null;
 const banner = document.getElementById('install-banner');
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  banner.classList.add('show');
-});
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt=e; banner.classList.add('show'); });
 document.getElementById('installBtn').addEventListener('click', async () => {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  await deferredPrompt.userChoice;
-  banner.classList.remove('show');
-  deferredPrompt = null;
+  if (!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice;
+  banner.classList.remove('show'); deferredPrompt=null;
 });
 document.getElementById('closeBanner').addEventListener('click', () => banner.classList.remove('show'));
-window.addEventListener('appinstalled', () => { banner.classList.remove('show'); deferredPrompt = null; });
+window.addEventListener('appinstalled', () => { banner.classList.remove('show'); deferredPrompt=null; });
 
 // ── Service Worker ─────────────────────────────────────────
 if ('serviceWorker' in navigator) {
@@ -897,6 +1057,7 @@ if ('serviceWorker' in navigator) {
 
 // ── 시작 ───────────────────────────────────────────────────
 load();
+maybeSnapshot();
 renderAll();
 </script>
 </body>

@@ -1,4 +1,4 @@
-const CACHE = 'contracts-pwa-v1';
+const CACHE = 'contracts-pwa-v2';
 const ASSETS = [
   './index.html',
   './manifest.json',
