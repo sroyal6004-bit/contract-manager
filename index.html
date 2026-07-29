@@ -193,6 +193,7 @@
     .amt-v { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--text); }
     .amt-v .u { font-size: 10px; color: var(--muted); margin-left: 1px; }
     .amt-pill.deposit .amt-v { color: var(--accent); }
+    .amt-vat { display: block; font-family: var(--mono); font-size: 9px; color: var(--blue); margin-top: 4px; }
 
     .cc-typerow { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; }
     .cc-type { font-family: var(--mono); font-size: 10px; color: var(--muted2); background: var(--bg3); padding: 3px 8px; border-radius: 8px; }
@@ -489,10 +490,12 @@
       <div class="field">
         <label class="field-label">월세 (원)</label>
         <input type="text" id="fRent" inputmode="numeric" placeholder="예: 800000"/>
+        <div class="amount-hint" id="rentHint" style="color:var(--blue)"></div>
       </div>
       <div class="field">
         <label class="field-label">관리비 (원)</label>
         <input type="text" id="fMaint" inputmode="numeric" placeholder="예: 100000"/>
+        <div class="amount-hint" id="maintHint" style="color:var(--blue)"></div>
       </div>
     </div>
 
@@ -652,6 +655,8 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'
 function monthKey(d) { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
 function fileSize(b) { return b < 1024 ? b+'B' : b < 1048576 ? (b/1024).toFixed(0)+'KB' : (b/1048576).toFixed(1)+'MB'; }
 function clone(o) { return JSON.parse(JSON.stringify(o)); }
+function vat(n) { return Math.round((Number(n)||0) * 0.1); }        // 부가세 10%
+function incl(n) { n = Number(n)||0; return n + vat(n); }           // VAT 포함 합계
 
 function daysUntil(dateStr) {
   if (!dateStr) return null;
@@ -885,9 +890,10 @@ function renderFilters() {
 
 function amountsHtml(c) {
   const parts = [];
+  const vatLine = n => `<span class="amt-vat">부가세 ${fmt(vat(n))} · 합계 ${fmt(incl(n))}원</span>`;
   if (Number(c.deposit))     parts.push(`<div class="amt-pill deposit"><span class="amt-k">계약금·보증금</span><span class="amt-v">${fmt(c.deposit)}<span class="u">원</span></span></div>`);
-  if (Number(c.rent))        parts.push(`<div class="amt-pill"><span class="amt-k">월세</span><span class="amt-v">${fmt(c.rent)}<span class="u">원</span></span></div>`);
-  if (Number(c.maintenance)) parts.push(`<div class="amt-pill"><span class="amt-k">관리비</span><span class="amt-v">${fmt(c.maintenance)}<span class="u">원</span></span></div>`);
+  if (Number(c.rent))        parts.push(`<div class="amt-pill"><span class="amt-k">월세</span><span class="amt-v">${fmt(c.rent)}<span class="u">원</span></span>${vatLine(c.rent)}</div>`);
+  if (Number(c.maintenance)) parts.push(`<div class="amt-pill"><span class="amt-k">관리비</span><span class="amt-v">${fmt(c.maintenance)}<span class="u">원</span></span>${vatLine(c.maintenance)}</div>`);
   if (!parts.length) parts.push(`<div class="amt-pill"><span class="amt-k">금액</span><span class="amt-v">0<span class="u">원</span></span></div>`);
   return `<div class="cc-amounts">${parts.join('')}</div>`;
 }
@@ -993,7 +999,7 @@ function openModal(id) {
     F.signDate.value=''; F.endDate.value=''; F.notes.value='';
     draftFiles = [];
   }
-  updateDepositHint(); renderAttachList();
+  updateDepositHint(); updateVatHints(); renderAttachList();
   overlay.classList.add('show');
   document.body.style.overflow = 'hidden';
   setTimeout(() => F.title.focus(), 100);
@@ -1044,6 +1050,11 @@ function updateDepositHint() {
   let s=''; if(eok) s+=`${eok}억 `; if(man) s+=`${fmt(man)}만 `;
   depositHint.textContent = '= ' + (s.trim() || fmt(n)) + '원';
 }
+function updateVatHints() {
+  const r = numOf(F.rent), m = numOf(F.maint);
+  document.getElementById('rentHint').textContent  = r ? `부가세 10% ${fmt(vat(r))} · 합계 ${fmt(incl(r))}원` : '';
+  document.getElementById('maintHint').textContent = m ? `부가세 10% ${fmt(vat(m))} · 합계 ${fmt(incl(m))}원` : '';
+}
 
 // ── 첨부파일 입력 ───────────────────────────────────────────
 document.getElementById('fFiles').addEventListener('change', async e => {
@@ -1071,20 +1082,22 @@ function openFile(fileId) {
 // ── 엑셀 내보내기 ─────────────────────────────────────────
 function exportExcel() {
   if (!contracts.length) { showToast('내보낼 계약이 없어요'); return; }
-  const rows = [['계약명','거래처','유형','상태','계약금/보증금','월세','관리비','체결일','만료일','담당자','메모']];
+  const rows = [['계약명','거래처','유형','상태','계약금/보증금','월세','월세 부가세(10%)','월세(VAT포함)','관리비','관리비 부가세(10%)','관리비(VAT포함)','체결일','만료일','담당자','메모']];
   contracts.slice().sort((a,b)=>(a.signDate||'').localeCompare(b.signDate||'')).forEach(c => rows.push([
     c.title, c.party||'', c.type||'', (STATUS[c.status]||{}).label||c.status,
-    Number(c.deposit)||0, Number(c.rent)||0, Number(c.maintenance)||0,
+    Number(c.deposit)||0,
+    Number(c.rent)||0, vat(c.rent), incl(c.rent),
+    Number(c.maintenance)||0, vat(c.maintenance), incl(c.maintenance),
     c.signDate||'', c.endDate||'', c.manager||'', c.notes||''
   ]));
   rows.push([]);
   const nc = contracts.filter(c=>c.status!=='canceled');
-  rows.push(['합계','','','',
-    nc.reduce((s,c)=>s+(Number(c.deposit)||0),0),
-    nc.reduce((s,c)=>s+(Number(c.rent)||0),0),
-    nc.reduce((s,c)=>s+(Number(c.maintenance)||0),0),'','','','해지 제외']);
+  const sd = nc.reduce((s,c)=>s+(Number(c.deposit)||0),0);
+  const sr = nc.reduce((s,c)=>s+(Number(c.rent)||0),0);
+  const sm = nc.reduce((s,c)=>s+(Number(c.maintenance)||0),0);
+  rows.push(['합계','','','', sd, sr, vat(sr), incl(sr), sm, vat(sm), incl(sm), '','','','해지 제외']);
   const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = [{wch:24},{wch:16},{wch:8},{wch:8},{wch:16},{wch:12},{wch:12},{wch:12},{wch:12},{wch:10},{wch:36}];
+  ws['!cols'] = [{wch:24},{wch:16},{wch:8},{wch:8},{wch:16},{wch:12},{wch:14},{wch:14},{wch:12},{wch:14},{wch:14},{wch:12},{wch:12},{wch:10},{wch:36}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '계약 목록');
   const now = new Date();
@@ -1119,7 +1132,10 @@ function buildShareText() {
     t += `\n${i+1}. ${c.title}`;
     if (c.party) t += ` — ${c.party}`;
     if (!onlyOne) t += `\n   [${(STATUS[c.status]||{}).label||''}]`;
-    const amt = keys.filter(k => Number(c[k])).map(k => `${ITEM_LABEL[k]} ${fmt(c[k])}원`);
+    const amt = keys.filter(k => Number(c[k])).map(k => {
+      const base = `${ITEM_LABEL[k]} ${fmt(c[k])}원`;
+      return (k === 'rent' || k === 'maintenance') ? `${base}(VAT포함 ${fmt(incl(c[k]))})` : base;
+    });
     if (amt.length) t += `\n   ${amt.join(' / ')}`;
     else if (keys.length) t += `\n   (해당 항목 없음)`;
     if (!onlyOne && (c.signDate || c.endDate)) t += `\n   ${c.signDate||'?'} ~ ${c.endDate||'?'}`;
@@ -1127,9 +1143,16 @@ function buildShareText() {
 
   const sum = k => picks.reduce((s,c)=>s+(Number(c[k])||0),0);
   t += `\n\n━━━━━━━━━━━━━━\n💰 항목별 합계`;
-  keys.forEach(k => { t += `\n· ${ITEM_LABEL[k]} 합계 : ${fmt(sum(k))}원`; });
+  keys.forEach(k => {
+    const s = sum(k);
+    if (k === 'rent' || k === 'maintenance')
+      t += `\n· ${ITEM_LABEL[k]} 합계 : ${fmt(s)}원 (부가세 ${fmt(vat(s))} · VAT포함 ${fmt(incl(s))}원)`;
+    else
+      t += `\n· ${ITEM_LABEL[k]} 합계 : ${fmt(s)}원`;
+  });
   if (shareItems.has('rent') && shareItems.has('maintenance')) {
-    t += `\n· 월 고정비(월세+관리비) : ${fmt(sum('rent')+sum('maintenance'))}원`;
+    const rm = sum('rent') + sum('maintenance');
+    t += `\n· 월 고정비(월세+관리비) : ${fmt(rm)}원 (VAT포함 ${fmt(incl(rm))}원)`;
   }
   if (!keys.length) t += `\n(선택된 항목이 없습니다)`;
   return t;
@@ -1234,6 +1257,8 @@ overlay.addEventListener('click', e => { if (e.target === overlay) closeModal();
 exportBtn.addEventListener('click', exportExcel);
 sampleBtn.addEventListener('click', loadSample);
 F.deposit.addEventListener('input', updateDepositHint);
+F.rent.addEventListener('input', updateVatHints);
+F.maint.addEventListener('input', updateVatHints);
 searchInput.addEventListener('input', e => { search = e.target.value.trim(); renderList(); });
 
 shareModeBtn.addEventListener('click', () => toggleSelectMode(!selectMode));
