@@ -1,4 +1,4 @@
-const CACHE = 'contracts-pwa-v11';
+const CACHE = 'contracts-pwa-v12';
 const ASSETS = [
   './',
   './index.html',
@@ -6,7 +6,8 @@ const ASSETS = [
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
   'https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js',
-  'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js'
+  'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js',
+  'https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js'
 ];
 
 self.addEventListener('install', e => {
