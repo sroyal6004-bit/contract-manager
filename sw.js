@@ -1,4 +1,4 @@
-const CACHE = 'contracts-pwa-v7';
+const CACHE = 'contracts-pwa-v8';
 const ASSETS = [
   './',
   './index.html',
@@ -21,18 +21,32 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// 정적 자원(앱 셸/CDN)만 캐시로 응답. Firebase/Firestore 등 API 요청은 건드리지 않고 네트워크로 통과.
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+
+  // HTML 문서는 네트워크 우선 → 새 버전 배포 시 즉시 반영, 오프라인이면 캐시 폴백
+  if (req.mode === 'navigate' || req.destination === 'document') {
+    e.respondWith(
+      fetch(req).then(res => {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put('./index.html', copy)).catch(() => {});
+        return res;
+      }).catch(() => caches.match('./index.html').then(m => m || caches.match('./')))
+    );
+    return;
+  }
+
+  // 정적 자원(앱 셸/CDN/폰트)만 캐시 우선. Firebase/Firestore 등 API는 통과.
   const cacheable =
     url.origin === location.origin ||
     url.href.includes('cdnjs.cloudflare.com/ajax/libs/xlsx') ||
     url.href.includes('gstatic.com/firebasejs') ||
     url.href.includes('fonts.googleapis.com') ||
     url.href.includes('fonts.gstatic.com');
-  if (!cacheable) return; // firestore.googleapis.com, identitytoolkit 등은 그대로 통과
+  if (!cacheable) return;
+
   e.respondWith(
     caches.match(req).then(cached => cached || fetch(req).then(res => {
       const copy = res.clone();
