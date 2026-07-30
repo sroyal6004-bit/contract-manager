@@ -410,8 +410,11 @@
       <button class="tool-btn share" id="shareModeBtn">📤 선택 공유</button>
       <button class="tool-btn" id="snapBtn">📅 보관 기록</button>
       <button class="tool-btn excel" id="exportBtn">📥 엑셀</button>
+      <button class="tool-btn" id="backupBtn">💾 백업</button>
+      <button class="tool-btn" id="restoreBtn">📂 복원</button>
       <button class="tool-btn" id="sampleBtn">✨ 예시</button>
     </div>
+    <input type="file" id="importInput" accept="application/json,.json" style="display:none"/>
 
     <div class="divider">
       <span class="divider-label">계약 목록</span>
@@ -654,6 +657,21 @@ const F = {
   endDate: document.getElementById('fEndDate'),
   notes:   document.getElementById('fNotes'),
 };
+
+// ── 뒤로가기 레이어 스택 (모달/시트는 뒤로가기로 닫고, 홈에서만 종료) ──
+const uiStack = [];
+function pushHist(tag) { try { history.pushState({ t: tag }, ''); return true; } catch { return false; } }
+function openLayer(tag, onClose) { uiStack.push({ tag, onClose, pushed: pushHist(tag) }); }
+function uiBack() {
+  const top = uiStack[uiStack.length - 1];
+  if (!top) return;
+  if (top.pushed) history.back();        // popstate에서 닫힘 처리
+  else { uiStack.pop(); top.onClose(); }
+}
+window.addEventListener('popstate', () => {
+  const top = uiStack.pop();
+  if (top) top.onClose();
+});
 
 // ── 유틸 ───────────────────────────────────────────────────
 function fmt(n) { return (Number(n) || 0).toLocaleString('ko-KR'); }
@@ -1047,9 +1065,10 @@ function openModal(id) {
   updateDepositHint(); updateVatHints(); renderAttachList();
   overlay.classList.add('show');
   document.body.style.overflow = 'hidden';
+  openLayer('edit', closeModalDom);
   setTimeout(() => F.title.focus(), 100);
 }
-function closeModal() { overlay.classList.remove('show'); document.body.style.overflow=''; editingId=null; draftFiles=[]; }
+function closeModalDom() { overlay.classList.remove('show'); document.body.style.overflow=''; editingId=null; draftFiles=[]; }
 
 function numOf(el) { return Number(String(el.value).replace(/[^0-9]/g,'')) || 0; }
 
@@ -1078,7 +1097,7 @@ function saveContract() {
   };
   persistContract(c);
   showToast(editingId ? '수정되었습니다' : '계약이 추가되었습니다');
-  closeModal();
+  uiBack();
 }
 function deleteContract(id) {
   const c = contracts.find(x => x.id === id); if (!c) return;
@@ -1150,12 +1169,58 @@ function exportExcel() {
   XLSX.writeFile(wb, `계약기록_${dt}.xlsx`);
 }
 
+// ── JSON 백업 / 복원 ────────────────────────────────────────
+function exportBackup() {
+  const data = { app: 'contract-manager', version: 1, exportedAt: nowISO(), contracts, snapshots };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const now = new Date();
+  const dt = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  const a = document.createElement('a');
+  a.href = url; a.download = `계약백업_${dt}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast('백업 파일을 저장했어요 (첨부 원본 제외)');
+}
+async function importBackup(file) {
+  let data;
+  try { data = JSON.parse(await file.text()); }
+  catch { showToast('올바른 백업 파일이 아니에요'); return; }
+  const cs = Array.isArray(data.contracts) ? data.contracts : null;
+  if (!cs) { showToast('계약 데이터를 찾을 수 없어요'); return; }
+  const ss = (data.snapshots && typeof data.snapshots === 'object') ? data.snapshots : {};
+  if (!confirm(`백업의 계약 ${cs.length}건과 보관 ${Object.keys(ss).length}개를 가져와 현재 데이터와 병합할까요?`)) return;
+  cs.forEach(normalize);
+  if (fbUser) {
+    try {
+      const batch = fbDb.batch();
+      cs.forEach(c => { if (!c.id) c.id = uid(); pendingWrites.add(c.id); batch.set(userCol().doc(c.id), c); });
+      Object.keys(ss).forEach(k => batch.set(userSnapCol().doc(k), ss[k]));
+      await batch.commit();
+      showToast(`가져왔어요 · 계약 ${cs.length}건 병합`);
+    } catch (e) { showToast('가져오기 오류: ' + (e.code || e.message)); }
+  } else {
+    cs.forEach(c => { const i = contracts.findIndex(x => x.id === c.id); if (i > -1) contracts[i] = c; else contracts.push(c); });
+    Object.keys(ss).forEach(k => { snapshots[k] = ss[k]; });
+    saveLocal(); saveLocalSnaps(); renderAll();
+    showToast(`가져왔어요 · 계약 ${cs.length}건 병합`);
+  }
+}
+
 // ── 선택 공유 (카톡 등) ─────────────────────────────────────
-function toggleSelectMode(on) {
-  selectMode = on; selected.clear();
-  selectBar.classList.toggle('show', on);
-  addFab.classList.toggle('hidden', on);
-  shareModeBtn.textContent = on ? '✖ 선택 종료' : '📤 선택 공유';
+function enterSelectMode() {
+  selectMode = true; selected.clear();
+  selectBar.classList.add('show');
+  addFab.classList.add('hidden');
+  shareModeBtn.textContent = '✖ 선택 종료';
+  updateSelCount(); renderList();
+  openLayer('select', exitSelectMode);
+}
+function exitSelectMode() {
+  selectMode = false; selected.clear();
+  selectBar.classList.remove('show');
+  addFab.classList.remove('hidden');
+  shareModeBtn.textContent = '📤 선택 공유';
   updateSelCount(); renderList();
 }
 function updateSelCount() {
@@ -1210,6 +1275,7 @@ function shareSelected() {
   shareNative.style.display = (isMobile && navigator.share) ? 'block' : 'none';
   shareOverlay.classList.add('show');
   document.body.style.overflow = 'hidden';
+  openLayer('share', closeShareDom);
 }
 shareItemsEl.addEventListener('click', e => {
   const chip = e.target.closest('.item-chip'); if (!chip) return;
@@ -1218,7 +1284,7 @@ shareItemsEl.addEventListener('click', e => {
   chip.classList.toggle('active', shareItems.has(k));
   refreshShareText();
 });
-function closeShare() { shareOverlay.classList.remove('show'); document.body.style.overflow=''; }
+function closeShareDom() { shareOverlay.classList.remove('show'); document.body.style.overflow=''; }
 async function copyShareText() {
   const text = shareText.value;
   try {
@@ -1236,7 +1302,14 @@ async function nativeShare() {
 }
 
 // ── 보관 기록 모달 ──────────────────────────────────────────
-function openSnapList() {
+function closeSnapDom() { snapOverlay.classList.remove('show'); document.body.style.overflow=''; }
+function openSnap() {
+  renderSnapListView();
+  snapOverlay.classList.add('show');
+  document.body.style.overflow = 'hidden';
+  openLayer('snap', closeSnapDom);
+}
+function renderSnapListView() {
   const keys = Object.keys(snapshots).sort().reverse();
   let html = `<div class="modal-title">📅 보관 기록</div>
     <div class="modal-sub">매달 자동으로 계약 내용을 보관합니다. 날짜를 누르면 그 시점 내용을 볼 수 있어요.</div>
@@ -1260,10 +1333,12 @@ function openSnapList() {
   }
   html += `<div class="modal-actions"><button class="modal-btn cancel" id="snapClose">닫기</button></div>`;
   snapView.innerHTML = html;
-  snapOverlay.classList.add('show');
-  document.body.style.overflow = 'hidden';
 }
 function openSnapDetail(key) {
+  renderSnapDetailView(key);
+  openLayer('snapDetail', renderSnapListView);   // 뒤로가기 → 목록으로
+}
+function renderSnapDetailView(key) {
   const s = snapshots[key]; if (!s) return;
   const list = sortContracts((s.contracts||[]).slice());
   const dep = (s.contracts||[]).reduce((a,c)=>a+(Number(c.deposit)||0),0);
@@ -1276,7 +1351,6 @@ function openSnapDetail(key) {
       <button class="modal-btn save" id="snapRestore" data-snap="${key}">이 시점으로 복원</button>
     </div>`;
 }
-function closeSnap() { snapOverlay.classList.remove('show'); document.body.style.overflow=''; }
 
 // ── 예시 데이터 ────────────────────────────────────────────
 function loadSample() {
@@ -1296,30 +1370,36 @@ function loadSample() {
 
 // ── 이벤트 ─────────────────────────────────────────────────
 addFab.addEventListener('click', () => openModal());
-document.getElementById('modalCancel').addEventListener('click', closeModal);
+document.getElementById('modalCancel').addEventListener('click', () => uiBack());
 document.getElementById('modalSave').addEventListener('click', saveContract);
-overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+overlay.addEventListener('click', e => { if (e.target === overlay) uiBack(); });
 exportBtn.addEventListener('click', exportExcel);
 sampleBtn.addEventListener('click', loadSample);
+document.getElementById('backupBtn').addEventListener('click', exportBackup);
+document.getElementById('restoreBtn').addEventListener('click', () => document.getElementById('importInput').click());
+document.getElementById('importInput').addEventListener('change', e => {
+  const f = e.target.files[0]; if (f) importBackup(f);
+  e.target.value = '';
+});
 F.deposit.addEventListener('input', updateDepositHint);
 F.rent.addEventListener('input', updateVatHints);
 F.maint.addEventListener('input', updateVatHints);
 searchInput.addEventListener('input', e => { search = e.target.value.trim(); renderList(); });
 
-shareModeBtn.addEventListener('click', () => toggleSelectMode(!selectMode));
-document.getElementById('selCancel').addEventListener('click', () => toggleSelectMode(false));
+shareModeBtn.addEventListener('click', () => { selectMode ? uiBack() : enterSelectMode(); });
+document.getElementById('selCancel').addEventListener('click', () => uiBack());
 document.getElementById('selShare').addEventListener('click', shareSelected);
 document.getElementById('shareCopy').addEventListener('click', copyShareText);
-document.getElementById('shareClose').addEventListener('click', closeShare);
+document.getElementById('shareClose').addEventListener('click', () => uiBack());
 shareNative.addEventListener('click', nativeShare);
-shareOverlay.addEventListener('click', e => { if (e.target === shareOverlay) closeShare(); });
+shareOverlay.addEventListener('click', e => { if (e.target === shareOverlay) uiBack(); });
 
-snapBtn.addEventListener('click', openSnapList);
-snapOverlay.addEventListener('click', e => { if (e.target === snapOverlay) closeSnap(); });
+snapBtn.addEventListener('click', openSnap);
+snapOverlay.addEventListener('click', e => { if (e.target === snapOverlay) uiBack(); });
 snapView.addEventListener('click', e => {
-  if (e.target.closest('#snapClose')) { closeSnap(); return; }
-  if (e.target.closest('#snapBack')) { openSnapList(); return; }
-  if (e.target.closest('#snapNowBtn')) { snapshotNow(); openSnapList(); return; }
+  if (e.target.closest('#snapClose')) { uiBack(); return; }
+  if (e.target.closest('#snapBack')) { uiBack(); return; }
+  if (e.target.closest('#snapNowBtn')) { snapshotNow(); renderSnapListView(); return; }
   const restore = e.target.closest('#snapRestore');
   if (restore) {
     const k = restore.dataset.snap;
@@ -1328,14 +1408,13 @@ snapView.addEventListener('click', e => {
       const restored = clone(snapshots[k].contracts || []);
       if (fbUser) {
         const batch = fbDb.batch();
-        // 현재 계약 모두 삭제 후 복원본으로 교체
         contracts.forEach(c => batch.delete(userCol().doc(c.id)));
-        restored.forEach(c => { if (!c.id) c.id = uid(); batch.set(userCol().doc(c.id), c); });
+        restored.forEach(c => { if (!c.id) c.id = uid(); pendingWrites.add(c.id); batch.set(userCol().doc(c.id), c); });
         batch.commit().then(() => showToast(`${k} 시점으로 복원했어요`)).catch(()=>showToast('복원 오류'));
       } else {
         contracts = restored; saveLocal(); renderAll(); showToast(`${k} 시점으로 복원했어요`);
       }
-      closeSnap();
+      uiBack();   // 상세 → 목록
     }
     return;
   }
