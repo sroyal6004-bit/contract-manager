@@ -75,7 +75,11 @@
       padding: 12px 14px; background: var(--bg2); border: 1px solid var(--border2);
       border-radius: 12px; font-size: 12px;
     }
-    .auth-bar .ab-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); flex-shrink: 0; }
+    .auth-bar.err { border-color: #3a1a1e; background: #140a0e; }
+    .auth-bar .ab-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); flex-shrink: 0; animation: pulse 2s ease-in-out infinite; }
+    .auth-bar .ab-dot.err { background: var(--red); box-shadow: 0 0 8px var(--red); animation: none; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+    .auth-bar .ab-sync { font-family: var(--mono); font-size: 10px; color: var(--muted2); }
     .auth-bar .ab-info { flex: 1; color: var(--muted); line-height: 1.4; min-width: 0; }
     .auth-bar .ab-info strong { color: var(--text2); font-weight: 700; }
     .auth-bar .ab-info .em { color: var(--green); font-family: var(--mono); font-size: 11px; word-break: break-all; }
@@ -598,6 +602,9 @@ let selected = new Set();
 let fbAuth = null, fbDb = null, fbUser = null;
 let unsubC = null, unsubS = null;
 let snapChecked = false;
+let lastSyncAt = '';        // 최근 서버 반영 시각
+let syncError = '';         // 동기화 오류 상태 ('rules' 등)
+let pendingWrites = new Set(); // 방금 이 기기에서 쓴 문서 id (원격변경 판별용)
 
 const STATUS = {
   active:   { label: '진행중', cls: 'st-active' },
@@ -722,7 +729,8 @@ function userSnapCol() { return fbDb.collection('users').doc(fbUser.uid).collect
 
 function persistContract(c) {
   if (fbUser) {
-    userCol().doc(c.id).set(c).catch(e => showToast('동기화 오류: ' + e.code));
+    pendingWrites.add(c.id);
+    userCol().doc(c.id).set(c).catch(e => onSyncErr(e));
   } else {
     const idx = contracts.findIndex(x => x.id === c.id);
     if (idx > -1) contracts[idx] = c; else contracts.push(c);
@@ -731,7 +739,8 @@ function persistContract(c) {
 }
 function removeContract(id) {
   if (fbUser) {
-    userCol().doc(id).delete().catch(e => showToast('삭제 오류: ' + e.code));
+    pendingWrites.add(id);
+    userCol().doc(id).delete().catch(e => onSyncErr(e));
   } else {
     contracts = contracts.filter(x => x.id !== id);
     saveLocal(); renderAll();
@@ -804,13 +813,34 @@ async function migrateThenListen() {
   attachListeners();
 }
 
+function onSyncErr(err) {
+  syncError = (err && err.code === 'permission-denied') ? 'rules' : (err && err.code) || 'error';
+  renderAuth();
+  if (syncError === 'rules') {
+    showToast('⚠️ Firestore 보안 규칙을 게시해야 동기화됩니다');
+  }
+}
 function attachListeners() {
   snapChecked = false;
+  let firstServer = true;
   unsubC = userCol().onSnapshot(snap => {
+    if (syncError) { syncError = ''; renderAuth(); }
     contracts = snap.docs.map(d => normalize(d.data()));
     renderAll();
+
+    if (!snap.metadata.fromCache) {
+      lastSyncAt = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+      updateSyncStamp();
+      // 최초 서버 로드가 아닐 때만, 다른 기기에서 온 변경인지 판별 (내 쓰기의 서버 반영은 제외)
+      if (!firstServer) {
+        const remote = snap.docChanges().some(ch => !ch.doc.metadata.hasPendingWrites && !pendingWrites.has(ch.doc.id));
+        if (remote) showToast('🔄 다른 기기의 변경을 반영했어요');
+      }
+      snap.docChanges().forEach(ch => { if (!ch.doc.metadata.hasPendingWrites) pendingWrites.delete(ch.doc.id); });
+      firstServer = false;
+    }
     if (!snapChecked) { snapChecked = true; setTimeout(maybeSnapshot, 500); }
-  }, err => showToast('동기화 오류: ' + err.code));
+  }, onSyncErr);
 
   unsubS = userSnapCol().onSnapshot(snap => {
     snapshots = {};
@@ -841,15 +871,29 @@ function doSignOut() {
 
 function renderAuth() {
   if (fbUser) {
-    authBar.innerHTML = `
-      <span class="ab-dot"></span>
-      <div class="ab-info"><strong>실시간 동기화 중</strong><br/><span class="em">${esc(fbUser.email || fbUser.displayName || '로그인됨')}</span></div>
-      <button class="auth-btn signout" id="signOutBtn">로그아웃</button>`;
+    if (syncError === 'rules') {
+      authBar.classList.add('err');
+      authBar.innerHTML = `
+        <span class="ab-dot err"></span>
+        <div class="ab-info"><strong style="color:var(--red)">동기화 대기 중</strong><br/><span style="color:var(--red)">Firestore 보안 규칙을 게시해주세요</span></div>
+        <button class="auth-btn signout" id="signOutBtn">로그아웃</button>`;
+    } else {
+      authBar.classList.remove('err');
+      authBar.innerHTML = `
+        <span class="ab-dot"></span>
+        <div class="ab-info"><strong>실시간 동기화 중</strong> <span class="ab-sync" id="abSync">${lastSyncAt ? '· 최근 반영 '+lastSyncAt : ''}</span><br/><span class="em">${esc(fbUser.email || fbUser.displayName || '로그인됨')}</span></div>
+        <button class="auth-btn signout" id="signOutBtn">로그아웃</button>`;
+    }
   } else {
+    authBar.classList.remove('err');
     authBar.innerHTML = `
       <div class="ab-info"><strong>이 기기에만 저장 중</strong><br/>로그인하면 PC·폰이 실시간 연동됩니다</div>
       <button class="auth-btn signin" id="signInBtn">☁️ 로그인</button>`;
   }
+}
+function updateSyncStamp() {
+  const el = document.getElementById('abSync');
+  if (el) el.textContent = lastSyncAt ? '· 최근 반영 ' + lastSyncAt : '';
 }
 authBar.addEventListener('click', e => {
   if (e.target.closest('#signInBtn')) signIn();
