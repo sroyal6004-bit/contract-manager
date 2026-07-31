@@ -169,6 +169,19 @@
     }
     .contract-card:active { border-color: var(--accent2); }
 
+    /* 접기/펼치기 */
+    .cc-head { position: relative; cursor: pointer; padding-right: 20px; }
+    .cc-chevron {
+      position: absolute; right: 0; bottom: 0;
+      color: var(--muted2); font-size: 13px; transition: transform 0.2s; line-height: 1;
+    }
+    .contract-card.open .cc-chevron { transform: rotate(180deg); }
+    .cc-body { display: none; }
+    .contract-card.open .cc-body { display: block; }
+    /* 접힌 상태에서는 만료선 밑줄 제거 */
+    .contract-card:not(.open) .cc-dates { border-bottom: none; padding-bottom: 0; }
+    .contract-card.open .cc-dates { margin-bottom: 4px; }
+
     .select-mode .contract-card { padding-left: 48px; cursor: pointer; }
     .cc-check {
       display: none; position: absolute; left: 16px; top: 18px;
@@ -414,17 +427,6 @@
 
   <div class="main">
     <div class="auth-bar" id="authBar"></div>
-    <div class="stat-grid" id="statGrid"></div>
-
-    <div class="toolbar">
-      <button class="tool-btn share" id="shareModeBtn">📤 선택 공유</button>
-      <button class="tool-btn" id="snapBtn">📅 보관 기록</button>
-      <button class="tool-btn excel" id="exportBtn">📥 엑셀</button>
-      <button class="tool-btn" id="backupBtn">💾 백업</button>
-      <button class="tool-btn" id="restoreBtn">📂 복원</button>
-      <button class="tool-btn" id="sampleBtn">✨ 예시</button>
-    </div>
-    <input type="file" id="importInput" accept="application/json,.json" style="display:none"/>
 
     <div class="divider">
       <span class="divider-label">계약 목록</span>
@@ -438,6 +440,22 @@
 
     <div class="filter-row" id="filterRow"></div>
     <div class="contract-list" id="contractList"></div>
+
+    <!-- 요약 · 도구 (맨 아래) -->
+    <div class="divider" style="margin-top:28px">
+      <span class="divider-label">요약 · 도구</span>
+      <div class="divider-line"></div>
+    </div>
+    <div class="stat-grid" id="statGrid"></div>
+    <div class="toolbar">
+      <button class="tool-btn share" id="shareModeBtn">📤 선택 공유</button>
+      <button class="tool-btn" id="snapBtn">📅 보관 기록</button>
+      <button class="tool-btn excel" id="exportBtn">📥 엑셀</button>
+      <button class="tool-btn" id="backupBtn">💾 백업</button>
+      <button class="tool-btn" id="restoreBtn">📂 복원</button>
+      <button class="tool-btn" id="sampleBtn">✨ 예시</button>
+    </div>
+    <input type="file" id="importInput" accept="application/json,.json" style="display:none"/>
   </div>
 </div>
 
@@ -607,6 +625,7 @@ let snapshots = {};
 let filesStore = {};
 let filter = 'all';
 let search = '';
+let expanded = new Set();   // 펼쳐진 계약 카드 id
 let editingId = null;
 let modalDirty = false;  // 입력 모달에 작성 중인 변경이 있는지
 let draftFiles = [];     // 편집 중 [{id,name,type,size,data,missing}]
@@ -1041,28 +1060,34 @@ function cardHtml(c, readonly) {
     return `<span class="file-chip ${has?'':'missing'}" data-file="${f.id}" title="${has?'':'클라우드에 저장된 파일 · 탭하면 열림'}">${has?'📄':'☁️'} <span class="fn">${esc(f.name)}</span></span>`;
   }).join('');
   const picked = selected.has(c.id) ? 'picked' : '';
+  const open = readonly || expanded.has(c.id);   // 보관본 상세는 항상 펼침
   return `
-    <div class="contract-card ${picked}" data-id="${c.id}">
+    <div class="contract-card ${picked} ${open?'open':''}" data-id="${c.id}">
       <div class="cc-check">✓</div>
-      <div class="cc-top">
-        <div>
-          <div class="cc-title">${esc(c.title)}</div>
-          ${c.party ? `<div class="cc-party">${esc(c.party)}</div>` : ''}
+      <div class="cc-head">
+        <div class="cc-top">
+          <div>
+            <div class="cc-title">${esc(c.title)}</div>
+            ${c.party ? `<div class="cc-party">${esc(c.party)}</div>` : ''}
+          </div>
+          <div class="cc-status ${st.cls}">${st.label}</div>
         </div>
-        <div class="cc-status ${st.cls}">${st.label}</div>
+        ${datesHtml}
+        ${readonly ? '' : '<div class="cc-chevron">▾</div>'}
       </div>
-      ${datesHtml}
-      ${amountsHtml(c)}
-      <div class="cc-typerow">
-        <div class="cc-type">${esc(c.type || '기타')}</div>
+      <div class="cc-body">
+        ${amountsHtml(c)}
+        <div class="cc-typerow">
+          <div class="cc-type">${esc(c.type || '기타')}</div>
+        </div>
+        ${meta.length ? `<div class="cc-meta">${meta.join('')}</div>` : ''}
+        ${files ? `<div class="cc-files">${files}</div>` : ''}
+        ${c.notes ? `<div class="cc-notes">${esc(c.notes)}</div>` : ''}
+        ${readonly ? '' : `<div class="cc-actions">
+          <button class="cc-btn edit" data-id="${c.id}">✏️ 수정</button>
+          <button class="cc-btn del" data-id="${c.id}">🗑 삭제</button>
+        </div>`}
       </div>
-      ${meta.length ? `<div class="cc-meta">${meta.join('')}</div>` : ''}
-      ${files ? `<div class="cc-files">${files}</div>` : ''}
-      ${c.notes ? `<div class="cc-notes">${esc(c.notes)}</div>` : ''}
-      ${readonly ? '' : `<div class="cc-actions">
-        <button class="cc-btn edit" data-id="${c.id}">✏️ 수정</button>
-        <button class="cc-btn del" data-id="${c.id}">🗑 삭제</button>
-      </div>`}
     </div>`;
 }
 
@@ -1543,6 +1568,13 @@ contractList.addEventListener('click', e => {
   const delBtn  = e.target.closest('.cc-btn.del');
   if (editBtn) { openModal(editBtn.dataset.id); return; }
   if (delBtn)  { deleteContract(delBtn.dataset.id); return; }
+  // 헤더(제목·날짜) 탭 → 펼치기/접기
+  const head = e.target.closest('.cc-head');
+  if (head) {
+    const card = head.closest('.contract-card'); const id = card.dataset.id;
+    if (expanded.has(id)) expanded.delete(id); else expanded.add(id);
+    card.classList.toggle('open', expanded.has(id));
+  }
 });
 
 // ── PWA 설치 ───────────────────────────────────────────────
