@@ -186,6 +186,18 @@
     .contract-card.open .cc-chevron { transform: rotate(180deg); }
     .cc-body { display: none; }
     .contract-card.open .cc-body { display: block; }
+
+    /* 순서 편집 모드 */
+    .reorder-mode .cc-head { cursor: default; }
+    .reorder-mode .cc-body { display: none !important; }   /* 편집 중엔 모두 접힘 */
+    .cc-reorder { position: absolute; right: -2px; bottom: -2px; display: flex; flex-direction: column; gap: 4px; }
+    .ro-btn {
+      width: 34px; height: 26px; padding: 0;
+      background: var(--bg3); border: 1px solid var(--border2); border-radius: 7px;
+      color: var(--accent); font-size: 11px; cursor: pointer; -webkit-appearance: none;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .ro-btn:active { background: var(--accent); color: #0a0a0f; }
     /* 접힌 상태에서는 만료선 밑줄 제거 */
     .contract-card:not(.open) .cc-dates { border-bottom: none; padding-bottom: 0; }
     .contract-card.open .cc-dates { margin-bottom: 4px; }
@@ -438,7 +450,7 @@
     <div class="divider">
       <span class="divider-label">계약 목록</span>
       <div class="divider-line"></div>
-      <button class="sort-btn" id="sortBtn">⇅ 층순</button>
+      <button class="sort-btn" id="reorderBtn">↕ 순서 편집</button>
     </div>
 
     <div class="search-box">
@@ -633,7 +645,8 @@ let snapshots = {};
 let filesStore = {};
 let filter = 'all';
 let search = '';
-let sortMode = 'default';   // 'default'(상태·만료순) | 'floor'(층순)
+let sortMode = localStorage.getItem('cm_sort') || 'default';   // 'default'(상태·만료순) | 'manual'(내가 정한 순서)
+let reorderMode = false;    // 순서 편집 모드
 let expanded = new Set();   // 펼쳐진 계약 카드 id
 let editingId = null;
 let modalDirty = false;  // 입력 모달에 작성 중인 변경이 있는지
@@ -1082,7 +1095,9 @@ function cardHtml(c, readonly) {
           <div class="cc-status ${st.cls}">${st.label}</div>
         </div>
         ${datesHtml}
-        ${readonly ? '' : '<div class="cc-chevron">▾</div>'}
+        ${readonly ? '' : (reorderMode
+          ? `<div class="cc-reorder"><button class="ro-btn" data-move="up" data-id="${c.id}">▲</button><button class="ro-btn" data-move="down" data-id="${c.id}">▼</button></div>`
+          : '<div class="cc-chevron">▾</div>')}
       </div>
       <div class="cc-body">
         ${amountsHtml(c)}
@@ -1100,12 +1115,11 @@ function cardHtml(c, readonly) {
     </div>`;
 }
 
-function floorOf(c) { const m = (c.title || '').match(/(\d+)\s*층/); return m ? parseInt(m[1], 10) : 99999; }
-function sortByFloor(list) {
+function sortByManual(list) {
   return list.sort((a,b) => {
-    const fa = floorOf(a), fb = floorOf(b);
-    if (fa !== fb) return fa - fb;                 // 1층 → 2층 → ...
-    return (a.title || '').localeCompare(b.title || '', 'ko');
+    const oa = (a.order == null ? 1e15 : a.order), ob = (b.order == null ? 1e15 : b.order);
+    if (oa !== ob) return oa - ob;
+    return (a.createdAt||0) - (b.createdAt||0);
   });
 }
 function sortContracts(list) {
@@ -1119,7 +1133,7 @@ function sortContracts(list) {
     return (b.createdAt||0)-(a.createdAt||0);
   });
 }
-function renderList() {
+function currentList() {
   let list = contracts.slice();
   if (filter !== 'all') list = list.filter(c => c.status === filter);
   if (search) {
@@ -1128,8 +1142,13 @@ function renderList() {
       (c.title||'').toLowerCase().includes(q) || (c.party||'').toLowerCase().includes(q) ||
       (c.manager||'').toLowerCase().includes(q) || (c.type||'').toLowerCase().includes(q));
   }
-  if (sortMode === 'floor') sortByFloor(list); else sortContracts(list);
+  if (sortMode === 'manual') sortByManual(list); else sortContracts(list);
+  return list;
+}
+function renderList() {
+  const list = currentList();
   contractList.classList.toggle('select-mode', selectMode);
+  contractList.classList.toggle('reorder-mode', reorderMode);
 
   if (!list.length) {
     contractList.innerHTML = `
@@ -1143,6 +1162,46 @@ function renderList() {
   contractList.innerHTML = list.map(c => cardHtml(c, false)).join('');
 }
 function renderAll() { renderStats(); renderFilters(); renderList(); }
+
+// ── 순서 편집 (사용자 지정 순서) ────────────────────────────
+function persistOrder(list) {
+  if (fbUser) {
+    const batch = fbDb.batch();
+    list.forEach(c => { pendingWrites.add(c.id); batch.set(userCol().doc(c.id), c); });
+    batch.commit().catch(() => showToast('순서 저장 오류'));
+  } else {
+    saveLocal();
+  }
+}
+function assignManualOrder() {
+  const ordered = sortContracts(contracts.slice());   // 현재 기본순을 그대로 굳힘
+  ordered.forEach((c, i) => { c.order = i * 10; });
+  persistOrder(ordered);
+}
+function toggleReorder() {
+  reorderMode = !reorderMode;
+  const btn = document.getElementById('reorderBtn');
+  if (reorderMode) {
+    filter = 'all'; search = ''; searchInput.value = '';   // 전체 목록에서 편집
+    if (sortMode !== 'manual') { assignManualOrder(); sortMode = 'manual'; localStorage.setItem('cm_sort', 'manual'); }
+    btn.textContent = '✓ 완료'; btn.classList.add('on');
+    showToast('▲▼ 로 순서를 옮기세요');
+  } else {
+    btn.textContent = '↕ 순서 편집'; btn.classList.remove('on');
+  }
+  renderFilters(); renderList();
+}
+function moveContract(id, dir) {
+  const list = currentList();
+  const idx = list.findIndex(c => c.id === id);
+  const j = dir === 'up' ? idx - 1 : idx + 1;
+  if (idx < 0 || j < 0 || j >= list.length) return;
+  const a = list[idx], b = list[j];
+  const ao = (a.order == null ? idx*10 : a.order), bo = (b.order == null ? j*10 : b.order);
+  a.order = bo; b.order = ao;                            // 두 항목의 순서값 교환
+  persistOrder([a, b]);
+  renderList();
+}
 
 // ── 모달(추가/수정) ─────────────────────────────────────────
 function renderAttachList() {
@@ -1214,6 +1273,7 @@ function saveContract() {
     signDate: F.signDate.value, endDate: F.endDate.value, notes: F.notes.value.trim(),
     attachments,
   };
+  if (base.order != null) c.order = base.order;   // 사용자 지정 순서 유지 (undefined는 제외 — Firestore 거부)
   persistContract(c);
   if (fbUser) draftFiles.forEach(f => { if (f.data) uploadFile(f.id); });   // 첨부 → Storage 업로드
   showToast(editingId ? '수정되었습니다' : '계약이 추가되었습니다');
@@ -1528,12 +1588,7 @@ F.deposit.addEventListener('input', updateDepositHint);
 F.rent.addEventListener('input', updateVatHints);
 F.maint.addEventListener('input', updateVatHints);
 searchInput.addEventListener('input', e => { search = e.target.value.trim(); renderList(); });
-document.getElementById('sortBtn').addEventListener('click', e => {
-  sortMode = sortMode === 'floor' ? 'default' : 'floor';
-  e.currentTarget.textContent = sortMode === 'floor' ? '⇅ 기본순' : '⇅ 층순';
-  e.currentTarget.classList.toggle('on', sortMode === 'floor');
-  renderList();
-});
+document.getElementById('reorderBtn').addEventListener('click', toggleReorder);
 
 shareModeBtn.addEventListener('click', () => { selectMode ? uiBack() : enterSelectMode(); });
 document.getElementById('selCancel').addEventListener('click', () => uiBack());
@@ -1577,6 +1632,8 @@ filterRow.addEventListener('click', e => {
 });
 
 contractList.addEventListener('click', e => {
+  const moveBtn = e.target.closest('.ro-btn');
+  if (moveBtn) { moveContract(moveBtn.dataset.id, moveBtn.dataset.move); return; }
   const fileChip = e.target.closest('.file-chip');
   if (fileChip) { openFile(fileChip.dataset.file); return; }
   if (selectMode) {
@@ -1591,9 +1648,9 @@ contractList.addEventListener('click', e => {
   const delBtn  = e.target.closest('.cc-btn.del');
   if (editBtn) { openModal(editBtn.dataset.id); return; }
   if (delBtn)  { deleteContract(delBtn.dataset.id); return; }
-  // 헤더(제목·날짜) 탭 → 펼치기/접기
+  // 헤더(제목·날짜) 탭 → 펼치기/접기 (편집 모드에선 비활성)
   const head = e.target.closest('.cc-head');
-  if (head) {
+  if (head && !reorderMode) {
     const card = head.closest('.contract-card'); const id = card.dataset.id;
     if (expanded.has(id)) expanded.delete(id); else expanded.add(id);
     card.classList.toggle('open', expanded.has(id));
