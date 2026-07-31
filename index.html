@@ -529,7 +529,7 @@
     </div>
 
     <div class="field">
-      <label class="field-label">계약서 첨부 <span style="color:var(--muted2);font-weight:400">(사진·PDF, 파일당 2MB 이하 · 이 기기에 보관)</span></label>
+      <label class="field-label">계약서 첨부 <span style="color:var(--muted2);font-weight:400">(사진 자동 압축 · PDF 12MB 이하)</span></label>
       <div class="attach-zone">
         <input type="file" id="fFiles" accept="image/*,application/pdf" multiple/>
         <div class="az-icon">📎</div>
@@ -722,17 +722,49 @@ function showToast(msg) {
 function nowISO() { return new Date().toISOString(); }
 
 // ── 첨부파일 로컬 스토어 ────────────────────────────────────
+// filesStore(localStorage): 작은 파일만 영구 캐시 / memFiles(메모리): 이번 세션의 모든 파일 즉시 열람
+const memFiles = new Map();          // fileId -> dataURL (세션 캐시, 용량 무관)
+const LS_FILE_CAP = 920000;          // 이보다 크면 localStorage에 넣지 않음(원본 손상 방지)
 function loadFiles() {
   try { filesStore = JSON.parse(localStorage.getItem(FILES_KEY)) || {}; } catch { filesStore = {}; }
   try { uploadedIds = new Set(JSON.parse(localStorage.getItem(UPLOADED_KEY)) || []); } catch { uploadedIds = new Set(); }
 }
 function saveFiles() { try { localStorage.setItem(FILES_KEY, JSON.stringify(filesStore)); } catch (e) {} }
 function saveUploaded() { try { localStorage.setItem(UPLOADED_KEY, JSON.stringify([...uploadedIds])); } catch (e) {} }
+function localData(id) { return memFiles.get(id) || filesStore[id] || null; }   // 이 기기에서 바로 열 수 있는 원본
+function hasLocal(id) { return memFiles.has(id) || (id in filesStore); }
+function cacheFile(id, data) {                                                   // 저장 시 로컬 캐시 반영
+  memFiles.set(id, data);
+  if (data.length < LS_FILE_CAP) { filesStore[id] = data; saveFiles(); }
+}
+function dropFile(id) { memFiles.delete(id); if (id in filesStore) { delete filesStore[id]; saveFiles(); } }
+
+// ── 이미지 압축 (계약서 글씨 가독성 유지하며 용량 축소) ──────
+function fileToDataURL(file) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); }); }
+function loadImage(src) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
+async function compressImage(file) {
+  const url = await fileToDataURL(file);
+  const img = await loadImage(url);
+  let w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+  const MAXDIM = 2400, TARGET = 1400000;   // 최대 2400px, 목표 ~1.4MB
+  const scale = Math.min(1, MAXDIM / Math.max(w, h));
+  w = Math.max(1, Math.round(w * scale)); h = Math.max(1, Math.round(h * scale));
+  const c = document.createElement('canvas');
+  const draw = () => { c.width = w; c.height = h; c.getContext('2d').drawImage(img, 0, 0, w, h); };
+  draw();
+  let q = 0.85, out = c.toDataURL('image/jpeg', q), guard = 0;
+  while (out.length * 0.75 > TARGET && guard++ < 8) {
+    if (q > 0.4) q -= 0.1;
+    else { w = Math.round(w * 0.85); h = Math.round(h * 0.85); draw(); q = 0.6; }
+    out = c.toDataURL('image/jpeg', q);
+  }
+  return out;
+}
 
 // 첨부 파일을 Storage에 업로드 (기기 간 공유)
 async function uploadFile(fileId) {
   if (!fbUser || !fbStorage || uploadedIds.has(fileId)) return;
-  const data = filesStore[fileId];
+  const data = localData(fileId);
   if (!data) return;
   try {
     await fbStorage.ref(`users/${fbUser.uid}/files/${fileId}`).putString(data, 'data_url');
@@ -744,7 +776,7 @@ function migrateFilesToStorage() {
   if (!fbUser || !fbStorage) return;
   const ids = new Set();
   contracts.forEach(c => (c.attachments || []).forEach(f => ids.add(f.id)));
-  ids.forEach(id => { if (filesStore[id] && !uploadedIds.has(id)) uploadFile(id); });
+  ids.forEach(id => { if (hasLocal(id) && !uploadedIds.has(id)) uploadFile(id); });
 }
 
 // 계약 객체 정규화: 금액 기본값 + 첨부 metadata에 id 부여 (구버전 data → filesStore 이동)
@@ -754,12 +786,10 @@ function normalize(c) {
   c.rent = Number(c.rent) || 0;
   c.maintenance = Number(c.maintenance) || 0;
   if (!Array.isArray(c.attachments)) c.attachments = [];
-  let moved = false;
   c.attachments = c.attachments.map(f => {
-    if (f && f.data) { const id = f.id || uid(); filesStore[id] = f.data; moved = true; return { id, name: f.name, type: f.type, size: f.size }; }
+    if (f && f.data) { const id = f.id || uid(); cacheFile(id, f.data); return { id, name: f.name, type: f.type, size: f.size }; }
     return { id: f.id || uid(), name: f.name, type: f.type, size: f.size };
   });
-  if (moved) saveFiles();
   return c;
 }
 
@@ -1007,7 +1037,7 @@ function cardHtml(c, readonly) {
   const meta = [];
   if (c.manager)  meta.push(`<span><span class="k">담당</span> ${esc(c.manager)}</span>`);
   const files = (c.attachments||[]).map(f => {
-    const has = !!filesStore[f.id];
+    const has = hasLocal(f.id);
     return `<span class="file-chip ${has?'':'missing'}" data-file="${f.id}" title="${has?'':'클라우드에 저장된 파일 · 탭하면 열림'}">${has?'📄':'☁️'} <span class="fn">${esc(f.name)}</span></span>`;
   }).join('');
   const picked = selected.has(c.id) ? 'picked' : '';
@@ -1092,7 +1122,7 @@ function openModal(id) {
     F.type.value=c.type||'기타'; F.status.value=c.status||'active';
     F.deposit.value=c.deposit||''; F.rent.value=c.rent||''; F.maint.value=c.maintenance||'';
     F.signDate.value=c.signDate||''; F.endDate.value=c.endDate||''; F.notes.value=c.notes||'';
-    draftFiles = (c.attachments||[]).map(f => ({ id:f.id, name:f.name, type:f.type, size:f.size, data: filesStore[f.id]||null, missing: !filesStore[f.id] }));
+    draftFiles = (c.attachments||[]).map(f => ({ id:f.id, name:f.name, type:f.type, size:f.size, data: localData(f.id), missing: !hasLocal(f.id) }));
   } else {
     modalTitle.textContent = '계약 추가';
     F.title.value=''; F.party.value=''; F.manager.value='';
@@ -1124,14 +1154,13 @@ function saveContract() {
   const title = F.title.value.trim();
   if (!title) { formError.textContent='⚠️ 계약명을 입력해주세요.'; formError.style.display='block'; return; }
 
-  // 기존 계약의 첨부와 비교해 삭제된 파일은 로컬 스토어에서 정리
+  // 기존 계약의 첨부와 비교해 삭제된 파일은 로컬 캐시에서 정리
   const prev = editingId ? contracts.find(c => c.id === editingId) : null;
   const keepIds = new Set(draftFiles.map(f => f.id));
-  if (prev) (prev.attachments||[]).forEach(f => { if (!keepIds.has(f.id)) delete filesStore[f.id]; });
+  if (prev) (prev.attachments||[]).forEach(f => { if (!keepIds.has(f.id)) dropFile(f.id); });
 
-  // 새 첨부 바이너리 저장 + 메타데이터만 계약에 보관
-  draftFiles.forEach(f => { if (f.data) filesStore[f.id] = f.data; });
-  saveFiles();
+  // 새 첨부 바이너리 캐시 + 메타데이터만 계약에 보관
+  draftFiles.forEach(f => { if (f.data) cacheFile(f.id, f.data); });
   const attachments = draftFiles.map(f => ({ id: f.id, name: f.name, type: f.type, size: f.size }));
 
   const base = prev || { id: uid(), createdAt: Date.now() };
@@ -1152,8 +1181,7 @@ function saveContract() {
 function deleteContract(id) {
   const c = contracts.find(x => x.id === id); if (!c) return;
   if (!confirm(`"${c.title}" 계약을 삭제할까요?`)) return;
-  (c.attachments||[]).forEach(f => delete filesStore[f.id]);
-  saveFiles();
+  (c.attachments||[]).forEach(f => dropFile(f.id));
   removeContract(id);
   showToast('삭제되었습니다');
 }
@@ -1173,10 +1201,19 @@ function updateVatHints() {
 // ── 첨부파일 입력 ───────────────────────────────────────────
 document.getElementById('fFiles').addEventListener('change', async e => {
   const files = Array.from(e.target.files);
+  if (files.length) showToast('파일 처리 중...');
   for (const file of files) {
-    if (file.size > 2*1048576) { showToast(`"${file.name}" 은 2MB를 초과해요`); continue; }
-    const data = await new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); });
-    draftFiles.push({ id: uid(), name: file.name, type: file.type, size: file.size, data, missing: false });
+    let data, size, type = file.type, name = file.name;
+    if (file.type.startsWith('image/')) {
+      try { data = await compressImage(file); type = 'image/jpeg'; }   // 사진 → 압축(용량 제한 없음)
+      catch { data = await fileToDataURL(file); }
+      size = Math.round(data.length * 0.75);
+    } else {
+      if (file.size > 12 * 1048576) { showToast(`"${file.name}" 은 12MB를 초과해요`); continue; }
+      data = await fileToDataURL(file);
+      size = file.size;
+    }
+    draftFiles.push({ id: uid(), name, type, size, data, missing: false });
   }
   modalDirty = true;
   renderAttachList();
@@ -1192,7 +1229,7 @@ function openDataUrl(data) {
   if (w) w.document.write(`<body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh">${isPdf ? `<iframe src="${data}" style="width:100vw;height:100vh;border:0"></iframe>` : `<img src="${data}" style="max-width:100%;max-height:100vh"/>`}</body>`);
 }
 function openFile(fileId) {
-  const data = filesStore[fileId];
+  const data = localData(fileId);
   if (data) { openDataUrl(data); return; }
   if (fbUser && fbStorage) {
     const w = window.open('about:blank');   // 팝업 차단 방지: 클릭 즉시 창 열고 나중에 이동
