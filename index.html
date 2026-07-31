@@ -160,6 +160,14 @@
     }
     .filter-chip .cnt { opacity: 0.6; margin-left: 4px; font-family: var(--mono); }
 
+    .sort-btn {
+      flex-shrink: 0; padding: 6px 12px;
+      background: var(--bg2); border: 1px solid var(--border2); border-radius: 16px;
+      color: var(--muted); font-family: var(--sans); font-size: 11px; font-weight: 600;
+      cursor: pointer; white-space: nowrap; -webkit-appearance: none;
+    }
+    .sort-btn.on { color: var(--accent); border-color: var(--accent2); }
+
     /* ── Contract cards ── */
     .contract-list { display: flex; flex-direction: column; gap: 11px; }
     .contract-card {
@@ -267,16 +275,15 @@
     .empty-sub { font-size: 12px; color: var(--muted2); line-height: 1.6; }
 
     .fab {
-      position: fixed; left: 16px; right: 16px;
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 14px); z-index: 50;
-      border: none; border-radius: 14px; padding: 16px;
+      position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); right: 20px; z-index: 50;
+      width: 58px; height: 58px; border-radius: 50%; border: none;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #0a0a0f; font-size: 16px; font-weight: 800; cursor: pointer;
+      color: #0a0a0f; font-size: 30px; font-weight: 300; cursor: pointer;
       box-shadow: 0 6px 24px rgba(244,169,74,0.35);
-      display: flex; align-items: center; justify-content: center; gap: 6px;
+      display: flex; align-items: center; justify-content: center;
       transition: transform 0.15s; line-height: 1; -webkit-appearance: none;
     }
-    .fab:active { transform: scale(0.98); }
+    .fab:active { transform: scale(0.92); }
     .fab.hidden { display: none; }
 
     .select-bar {
@@ -390,8 +397,8 @@
     }
 
     #install-banner {
-      display: none; position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 84px);
-      left: 12px; right: 12px; z-index: 100;
+      display: none; position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+      left: 12px; right: 90px; z-index: 100;
       background: linear-gradient(135deg, #1a1600, #261c00); border: 1px solid #3a2c00;
       border-radius: 14px; padding: 12px 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.6);
     }
@@ -431,6 +438,7 @@
     <div class="divider">
       <span class="divider-label">계약 목록</span>
       <div class="divider-line"></div>
+      <button class="sort-btn" id="sortBtn">⇅ 층순</button>
     </div>
 
     <div class="search-box">
@@ -459,7 +467,7 @@
   </div>
 </div>
 
-<button class="fab" id="addFab" aria-label="계약 추가">＋ 계약 추가</button>
+<button class="fab" id="addFab" aria-label="계약 추가">+</button>
 
 <div class="select-bar" id="selectBar">
   <div class="sb-count"><span id="selCount">0</span>건 선택됨</div>
@@ -625,6 +633,7 @@ let snapshots = {};
 let filesStore = {};
 let filter = 'all';
 let search = '';
+let sortMode = 'default';   // 'default'(상태·만료순) | 'floor'(층순)
 let expanded = new Set();   // 펼쳐진 계약 카드 id
 let editingId = null;
 let modalDirty = false;  // 입력 모달에 작성 중인 변경이 있는지
@@ -1091,6 +1100,14 @@ function cardHtml(c, readonly) {
     </div>`;
 }
 
+function floorOf(c) { const m = (c.title || '').match(/(\d+)\s*층/); return m ? parseInt(m[1], 10) : 99999; }
+function sortByFloor(list) {
+  return list.sort((a,b) => {
+    const fa = floorOf(a), fb = floorOf(b);
+    if (fa !== fb) return fa - fb;                 // 1층 → 2층 → ...
+    return (a.title || '').localeCompare(b.title || '', 'ko');
+  });
+}
 function sortContracts(list) {
   return list.sort((a,b) => {
     const rank = s => s==='active'?0 : s==='hold'?1 : s==='done'?2 : 3;
@@ -1111,7 +1128,7 @@ function renderList() {
       (c.title||'').toLowerCase().includes(q) || (c.party||'').toLowerCase().includes(q) ||
       (c.manager||'').toLowerCase().includes(q) || (c.type||'').toLowerCase().includes(q));
   }
-  sortContracts(list);
+  if (sortMode === 'floor') sortByFloor(list); else sortContracts(list);
   contractList.classList.toggle('select-mode', selectMode);
 
   if (!list.length) {
@@ -1511,6 +1528,12 @@ F.deposit.addEventListener('input', updateDepositHint);
 F.rent.addEventListener('input', updateVatHints);
 F.maint.addEventListener('input', updateVatHints);
 searchInput.addEventListener('input', e => { search = e.target.value.trim(); renderList(); });
+document.getElementById('sortBtn').addEventListener('click', e => {
+  sortMode = sortMode === 'floor' ? 'default' : 'floor';
+  e.currentTarget.textContent = sortMode === 'floor' ? '⇅ 기본순' : '⇅ 층순';
+  e.currentTarget.classList.toggle('on', sortMode === 'floor');
+  renderList();
+});
 
 shareModeBtn.addEventListener('click', () => { selectMode ? uiBack() : enterSelectMode(); });
 document.getElementById('selCancel').addEventListener('click', () => uiBack());
