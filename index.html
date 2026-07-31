@@ -1430,8 +1430,10 @@ function updateSelCount() {
 }
 const ITEM_LABEL = { deposit: '계약금·보증금', rent: '월세', maintenance: '관리비' };
 function buildShareText() {
-  const picks = contracts.filter(c => selected.has(c.id));
-  sortContracts(picks);
+  // 화면에 보이는(사용자가 정한) 순서 그대로 공유
+  const rank = new Map(currentList().map((c, i) => [c.id, i]));
+  const picks = contracts.filter(c => selected.has(c.id))
+    .sort((a, b) => (rank.has(a.id) ? rank.get(a.id) : 1e9) - (rank.has(b.id) ? rank.get(b.id) : 1e9));
   const keys = ['deposit','rent','maintenance'].filter(k => shareItems.has(k));
   const onlyOne = keys.length === 1;
 
